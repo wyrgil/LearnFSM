@@ -1,0 +1,29 @@
+{
+  "name": "learnfsm",
+  "version": "1.0.0",
+  "description": "Used for learning finite state machines",
+  "main": "fsm.js",
+  "dependencies": {
+    "cytoscape": "^3.5.3"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "-test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wyrgil/LearnFSM.git"
+  },
+  "keywords": [
+    "FSM",
+    "\"Finite",
+    "State",
+    "Automata\""
+  ],
+  "author": "Marius Santin",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/wyrgil/LearnFSM/issues"
+  },
+  "homepage": "https://github.com/wyrgil/LearnFSM#readme"
+}
