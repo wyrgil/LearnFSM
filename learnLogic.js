@@ -1,6 +1,8 @@
 var seletedState;
 var xPos;
 var yPos;
+var offsetX = 20;
+var offsetY = 20;
 var cyAnswer;
 var cyQuestion;
 
@@ -9,17 +11,46 @@ var startState;
 var states;
 
 function onLoad() {
-    xPos = 20;
+    xPos = 40;
 
-    yPos = 20;
+    yPos = 40;
 
     cyAnswer = cytoscape({
-        container: document.getElementById("cy-answer")
-    })
+        container: document.getElementById("cy-answer"),
+
+        style: cytoscape.stylesheet()
+            .selector('node')
+                .style({
+                    'content': 'data(id)',
+                    'text-valign': 'center',
+                    'text-halign': 'center',
+                    'width': 60,
+                    'height': 60,
+                    'background-color': '#ffffff',
+                    'border-width': 1,
+                    'border-color': 'black'
+                }),
+        layout: {
+            name: 'grid',
+            rows: 2,
+            cols: 2
+        }
+    });
 
     cyQuestion = cytoscape({
-        container: document.getElementById("cy-question")
-    })
+        container: document.getElementById("cy-question"),
+
+        style: cytoscape.stylesheet()
+            .selector('node')
+                .style({
+                    'content': 'data(id)'
+                }),
+        layout: {
+            name: 'breadthfirst',
+            directed: true,
+            padding: 10
+        }
+    });
 
     states = new Set();
 }
@@ -49,14 +80,14 @@ function newState() {
                     id: stateName
                 },
                 position: {
-                    x: xPos,
-                    y: yPos
+                    x: xPos + offsetX,
+                    y: yPos + offsetY
                 }
             });
             if (xPos == yPos) {
-                xPos += 20;
+                xPos += 200;
             } else {
-                yPos += 20;
+                yPos += 200;
             }
             infoTextColor("Neuen Zustand " + stateName + " erfolgreich erstellt.", "green");
             states.add(stateName);

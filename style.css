@@ -1,0 +1,29 @@
+body {
+    font: 14px helvetica neue, helvetica, arial, sans-serif;
+    background-color: lightgray;
+}
+
+#cy-answer {
+    background-color: white;
+    height: 40%;
+    width: 100%;
+    position: relative;
+    left: 0;
+    top: 0;
+}
+
+#cy-question {
+    background-color: white;
+    height: 40%;
+    width: 100%;
+    position: relative;
+    left: 0;
+    top: 0;
+}
+
+#buttons {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    z-index: 99999;
+}
