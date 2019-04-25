@@ -4,10 +4,24 @@
 
 <head>
     <script src="cytoscape.min.js"></script>
+    <script src="fsm.js"></script>
+    <script src="learnLogic.js"></script>
 </head>
-<body>
-    <div id="cy-question"></div>
+
+<body onload="onLoad()">
+
+    <div>
+        <div id="cy-question"></div>
+    </div>
+    <div id="options">
+        <button onclick="addToBottom">Zustand übernehmen</button>
+        <button onclick="newState()">Neuer Zustand</button>
+        <button onclick="makeStart">Zum Startzustand machen</button>
+        <button onclick="deleteState">Zustand löschen</button>
+        <button onclick="finish">Fertig!</button>
+    </div>
     <div id="cy-answer"></div>
+    <div id="infobox"></div>
 </body>
 
 </html>

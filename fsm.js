@@ -5,17 +5,17 @@
 
 class FSM {
     constructor() {
-        this.start = null;
-        this.states = new Set();
-        this.trans = new Set();
-        this.ends = new Set();
-    }
-
-    constructor(start, states, trans, ends) {
-        this.start = start;
-        this.states = states;
-        this.trans = trans;
-        this.ends = ends;
+        if (arguments.length != 4) {
+            this.start = null;
+            this.states = new Set();
+            this.trans = new Set();
+            this.ends = new Set();
+        } else {
+            this.start = arguments[0];
+            this.states = arguments[1];
+            this.trans = arguments[2];
+            this.ends = arguments[3];
+        }
     }
 
     setStart(start) {
@@ -77,7 +77,7 @@ class FSM {
             fins.push(mapper.get(end));
         });
 
-        if(fins == fsm.ends){
+        if (fins == fsm.ends) {
             return true;
         }
 
