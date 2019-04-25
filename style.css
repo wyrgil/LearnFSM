@@ -5,7 +5,7 @@ body {
 
 #cy-answer {
     background-color: white;
-    height: 40%;
+    height: 60%;
     width: 100%;
     position: relative;
     left: 0;
@@ -14,7 +14,7 @@ body {
 
 #cy-question {
     background-color: white;
-    height: 40%;
+    height: 30%;
     width: 100%;
     position: relative;
     left: 0;
