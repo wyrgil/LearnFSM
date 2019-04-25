@@ -1,8 +1,8 @@
 var seletedState;
 var xPos;
 var yPos;
-var offsetX = 20;
-var offsetY = 20;
+var offsetX = 80;
+var offsetY = 80;
 var cyAnswer;
 var cyQuestion;
 
@@ -10,10 +10,30 @@ var startState;
 
 var states;
 
-function onLoad() {
-    xPos = 40;
+var styleUnselected = {
+    'text-valign': 'center',
+    'text-halign': 'center',
+    'width': 60,
+    'height': 60,
+    'background-color': '#ffffff',
+    'border-width': 1,
+    'border-color': 'black'
+};
 
-    yPos = 40;
+var styleSelected = {
+    'text-valign': 'center',
+    'text-halign': 'center',
+    'width': 60,
+    'height': 60,
+    'background-color': '#ffffff',
+    'border-width': 3,
+    'border-color': 'black'
+};
+
+function onLoad() {
+    xPos = 0;
+
+    yPos = 0;
 
     cyAnswer = cytoscape({
         container: document.getElementById("cy-answer"),
@@ -53,9 +73,20 @@ function onLoad() {
     });
 
     states = new Set();
+
+    cyAnswer.on('tap', 'node', function(evt){
+        var node = evt.target;
+        selectState(node);
+    })
 }
 
-
+function selectState(node){
+    states.forEach(state => {
+        cyAnswer.getElementById(state).style(styleUnselected)
+    });
+    node.style(styleSelected);
+    seletedState = node;
+}
 
 function infoText(txt) {
     document.getElementById("infobox").innerHTML = txt;
@@ -84,13 +115,16 @@ function newState() {
                     y: yPos + offsetY
                 }
             });
-            if (xPos == yPos) {
-                xPos += 200;
-            } else {
+            if (yPos == 0) {
                 yPos += 200;
+            } else {
+                yPos -= 200;
+                xPos += 200;
             }
             infoTextColor("Neuen Zustand " + stateName + " erfolgreich erstellt.", "green");
             states.add(stateName);
+            var node = cyAnswer.getElementById(stateName);
+            selectState(node);
         }
     }
 }
@@ -103,4 +137,9 @@ function makeStart(){
 
 function removeStart(state){
     //TODO: remove circle around
+}
+
+function deleteState(){
+    cyAnswer.remove(seletedState);
+    states.delete(seletedState);
 }
