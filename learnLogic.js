@@ -31,6 +31,8 @@ var states;
 
 var transitions = new Set();
 
+var transitionSetFlag = false;
+
 function getStyle(selected, start, finish) {
     var sel = selected ? borderActive : border;
     var sta = start ? 'green' : 'black';
@@ -177,4 +179,40 @@ function makeFinish() {
         finishStates.add(selectedState);
     }
     selectState(node);
+}
+
+function newTransition(literal) {
+    var fromState = selectedState;
+    infoTextColor("Bitte auf das Ziel klicken");
+    transitionSetFlag = true;
+    var timeAtStart = new Date().getTime();
+    var tooMuchTimePassed = false;
+    while (transitionSetFlag) {
+        if (new Date().getTime() - 30000 <= timeAtStart) {
+            if (selectState != fromState) {
+                transitionSetFlag = false;
+            } else {
+               // await sleep(500);
+            }
+        }else{
+            transitionSetFlag = false;
+            tooMuchTimePassed = true;
+        }
+    }
+    if(tooMuchTimePassed){
+        infoTextColor("Das hat zu lange gedauert", "red");
+    }else{
+        cyAnswer.add({
+            group: 'edges',
+            data: {
+                source: fromState,
+                target: selectedState,
+                label: literal
+            }
+        });
+    }
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
