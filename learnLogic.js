@@ -1,12 +1,22 @@
+/**
+ * These are vaules associated with positioning of state representations in cyAnswer
+ */
 var selectedState;
 var xPos;
 var yPos;
 var offsetX = 80;
 var offsetY = 80;
 var delta = 130;
+
+/**
+ * These two variables are the cytoscape models for question and answer
+ */
 var cyAnswer;
 var cyQuestion;
 
+/**
+ * This is all for cyAnswer
+ */
 var border = 2;
 var borderActive = 4;
 
@@ -19,85 +29,7 @@ var finishStates = new Set();
 
 var states;
 
-var styleUnselected = {
-    'text-valign': 'center',
-    'text-halign': 'center',
-    'width': nodeSize,
-    'height': nodeSize,
-    'background-color': '#ffffff',
-    'border-width': border,
-    'border-color': 'black'
-};
-
-var styleSelected = {
-    'text-valign': 'center',
-    'text-halign': 'center',
-    'width': nodeSize,
-    'height': nodeSize,
-    'background-color': '#ffffff',
-    'border-width': borderActive,
-    'border-color': 'black'
-};
-
-var styleFinish = {
-    'text-valign': 'center',
-    'text-halign': 'center',
-    'width': nodeSize,
-    'height': nodeSize,
-    'background-color': 'yellow',
-    'border-width': border,
-    'border-color': 'black'
-};
-
-var styleFinishSelected = {
-    'text-valign': 'center',
-    'text-halign': 'center',
-    'width': nodeSize,
-    'height': nodeSize,
-    'background-color': 'yellow',
-    'border-width': borderActive,
-    'border-color': 'black'
-};
-
-var styleStart = {
-    'text-valign': 'center',
-    'text-halign': 'center',
-    'width': nodeSize,
-    'height': nodeSize,
-    'background-color': 'white',
-    'border-width': border,
-    'border-color': 'green'
-};
-
-var styleStartSelected = {
-    'text-valign': 'center',
-    'text-halign': 'center',
-    'width': nodeSize,
-    'height': nodeSize,
-    'background-color': 'white',
-    'border-width': borderActive,
-    'border-color': 'green'
-};
-
-var styleStartAndFinish = {
-    'text-valign': 'center',
-    'text-halign': 'center',
-    'width': nodeSize,
-    'height': nodeSize,
-    'background-color': 'yellow',
-    'border-width': border,
-    'border-color': 'green'
-};
-
-var styleStartAndFinishSelected = {
-    'text-valign': 'center',
-    'text-halign': 'center',
-    'width': nodeSize,
-    'height': nodeSize,
-    'background-color': 'yellow',
-    'border-width': borderActive,
-    'border-color': 'green'
-};
+var transitions = new Set();
 
 function getStyle(selected, start, finish) {
     var sel = selected ? borderActive : border;
@@ -164,35 +96,9 @@ function selectState(node) {
     states.forEach(state => {
         var node = cyAnswer.getElementById(state);
         node.style(getStyle((state == selectedState), (state == startState), (finishStates.has(state))));
-        /*if (!(startState == state)) {
-            if (!(finishStates.has(state))) {
-                node.style(styleUnselected);
-            } else {
-                node.style(styleFinish);
-            }
-        } else {
-            if (!(finishStates.has(state))) {
-                node.style(styleStart);
-            } else {
-                node.style(styleStartAndFinish);
-            }
-        }*/
     });
     var id = node.id();
     node.style(getStyle((id == selectedState), (id == startState), (id == finishStates)));
-    /*if (!(startState == id)) {
-        if (!(finishStates.has(id))) {
-            node.style(styleSelected);
-        } else {
-            node.style(styleFinishSelected);
-        }
-    } else {
-        if (!(finishStates.has(id))) {
-            node.style(styleStartSelected);
-        } else {
-            node.style(styleStartAndFinishSelected);
-        }
-    }*/
     if (finishStates.has(id)) {
         document.getElementById("makeFinish").textContent = "Zielzustand entfernen";
     } else {
