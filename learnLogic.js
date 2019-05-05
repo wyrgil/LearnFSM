@@ -29,6 +29,7 @@ var startNode = null;
 var finishStates = new Set();
 
 var states;
+var nodes;
 
 var transitions = new Set();
 
@@ -66,9 +67,13 @@ function onLoad() {
     });
 
     states = new Set();
+    nodes = new Set();
 
     paperAnswer.on('cell:pointerclick', function(node){
-        selectState(node);
+        nodes.forEach(element => {
+            paperAnswer.findViewByModel(element).unhighlight();
+        });
+        node.highlight();
     });
     // graphAnswer.on('tap', 'node', function (evt) {
     //     var node = evt.target;
@@ -104,20 +109,20 @@ function link(source, target, label, vertices){
 
 
 
-function selectState(node) {
-    states.forEach(state => {
-        var node = graphAnswer.getElementById(state);
-        node.style(getStyle((state == selectedState), (state == startState), (finishStates.has(state))));
-    });
-    var id = node.id();
-    node.style(getStyle((id == selectedState), (id == startState), (id == finishStates)));
-    if (finishStates.has(id)) {
-        document.getElementById("makeFinish").textContent = "Zielzustand entfernen";
-    } else {
-        document.getElementById("makeFinish").textContent = "Zum Zielzustand machen";
-    }
-    selectedState = node.id();
-}
+// function selectState(node) {
+//     states.forEach(state => {
+//         var node = graphAnswer.getElementById(state);
+//         node.style(getStyle((state == selectedState), (state == startState), (finishStates.has(state))));
+//     });
+//     var id = node.id();
+//     node.style(getStyle((id == selectedState), (id == startState), (id == finishStates)));
+//     if (finishStates.has(id)) {
+//         document.getElementById("makeFinish").textContent = "Zielzustand entfernen";
+//     } else {
+//         document.getElementById("makeFinish").textContent = "Zum Zielzustand machen";
+//     }
+//     selectedState = node.id();
+// }
 
 function infoText(txt) {
     document.getElementById("infobox").innerHTML = txt;
@@ -146,7 +151,7 @@ function newState() {
             }
             infoTextColor("Neuen Zustand " + stateName + " erfolgreich erstellt.", "green");
             states.add(stateName);
-            selectState(node);
+            nodes.add(node);
         }
     }
 }
