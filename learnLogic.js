@@ -11,8 +11,9 @@ var delta = 130;
 /**
  * These two variables are the cytoscape models for question and answer
  */
-var cyAnswer;
-var cyQuestion;
+var graphAnswer;
+var paperAnswer;
+var graphQuestion;
 
 /**
  * This is all for cyAnswer
@@ -54,49 +55,58 @@ function onLoad() {
 
     yPos = 0;
 
-    cyAnswer = cytoscape({
-        container: document.getElementById("cy-answer"),
+    graphAnswer = new joint.dia.Graph;
 
-        style: cytoscape.stylesheet()
-            .selector('node')
-            .style({
-                'content': 'data(id)'
-            }),
-        layout: {
-            name: 'grid',
-            rows: 2,
-            cols: 2
-        }
-    });
-
-    cyQuestion = cytoscape({
-        container: document.getElementById("cy-question"),
-
-        style: cytoscape.stylesheet()
-            .selector('node')
-            .style({
-                'content': 'data(id)'
-            }),
-        layout: {
-            name: 'breadthfirst',
-            directed: true,
-            padding: 10
-        }
+    paperAnswer = new joint.dia.Paper({
+        el: $('#paperAnswer'),
+        width: '100%',
+        heigth: '60%',
+        gridSize: 1,
+        model: graphAnswer
     });
 
     states = new Set();
 
-    cyAnswer.on('tap', 'node', function (evt) {
-        var node = evt.target;
+    paperAnswer.on('cell:pointerclick', function(node){
         selectState(node);
-    })
+    });
+    // graphAnswer.on('tap', 'node', function (evt) {
+    //     var node = evt.target;
+    //     selectState(node);
+    // });
 
-    cyAnswer.zoom(2);
+    var start = new joint.shapes.fsa.StartState({
+        position: {x: 10, y: 10}
+    });
+    graphAnswer.addCell(start);
 }
+
+function state(x, y, label){
+    var cell = new joint.shapes.fsa.State({
+        position: {x: x, y: y},
+        size: {width: nodeSize, height: nodeSize},
+        attrs: { text: {text: label}}
+    });
+    graphAnswer.addCell(cell);
+    return cell;
+}
+
+function link(source, target, label, vertices){
+    var cell = new joint.shapes.fsa.Arrow({
+        source: {id: source.id},
+        target: {id: target.id},
+        labels: [{position: .5, attrs: { text: { text: label || '', 'font-weight': 'bold'}}}],
+        vertices: vertices || []
+    });
+    graphAnswer.addCell(cell);
+    return cell;
+}
+
+
 
 function selectState(node) {
     states.forEach(state => {
-        var node = cyAnswer.getElementById(state);
+        var node = graphAnswer.getElementById(state);
         node.style(getStyle((state == selectedState), (state == startState), (finishStates.has(state))));
     });
     var id = node.id();
@@ -126,16 +136,8 @@ function newState() {
         if (states.has(stateName)) {
             infoTextColor("Ein Zustand mit diesem Namen existiert bereits", "red");
         } else {
-            cyAnswer.add({
-                group: 'nodes',
-                data: {
-                    id: stateName
-                },
-                position: {
-                    x: xPos + offsetX,
-                    y: yPos + offsetY
-                }
-            });
+            var node = state(xPos + offsetX, yPos + offsetY, stateName);
+            graphAnswer.addCell(node);
             if (yPos == 0) {
                 yPos += delta;
             } else {
@@ -144,7 +146,6 @@ function newState() {
             }
             infoTextColor("Neuen Zustand " + stateName + " erfolgreich erstellt.", "green");
             states.add(stateName);
-            var node = cyAnswer.getElementById(stateName);
             selectState(node);
         }
     }
@@ -153,24 +154,24 @@ function newState() {
 function makeStart() {
     removeStart(startState);
     startState = selectedState;
-    var node = cyAnswer.getElementById(startState);
+    var node = graphAnswer.getElementById(startState);
     node.style(styleStartSelected);
     selectState(node);
 }
 
 function removeStart(state) {
-    var node = cyAnswer.getElementById(state);
+    var node = graphAnswer.getElementById(state);
     node.style((styleUnselected));
 }
 
 function deleteState() {
-    cyAnswer.remove(selectedState);
+    graphAnswer.remove(selectedState);
     states.delete(selectedState);
     selectState(null);
 }
 
 function makeFinish() {
-    var node = cyAnswer.getElementById(selectedState);
+    var node = graphAnswer.getElementById(selectedState);
     if (finishStates.has(selectedState)) {
         node.style(styleSelected);
         finishStates.delete(selectedState);
@@ -202,7 +203,7 @@ function newTransition(literal) {
     if(tooMuchTimePassed){
         infoTextColor("Das hat zu lange gedauert", "red");
     }else{
-        cyAnswer.add({
+        graphAnswer.add({
             group: 'edges',
             data: {
                 source: fromState,
