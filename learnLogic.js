@@ -23,6 +23,8 @@ var borderActive = 4;
 
 var nodeSize = 60;
 
+var start;
+var startLink = null;
 var startState = null;
 var startNode = null;
 
@@ -69,38 +71,61 @@ function onLoad() {
     states = new Set();
     nodes = new Set();
 
-    paperAnswer.on('cell:pointerclick', function(node){
+    paperAnswer.on('cell:pointerclick', function (node) {
         nodes.forEach(element => {
             paperAnswer.findViewByModel(element).unhighlight();
         });
         node.highlight();
+        selectedState = node.model;
     });
-    // graphAnswer.on('tap', 'node', function (evt) {
-    //     var node = evt.target;
-    //     selectState(node);
-    // });
 
-    var start = new joint.shapes.fsa.StartState({
-        position: {x: 10, y: 10}
+    start = new joint.shapes.fsa.StartState({
+        position: {
+            x: 10,
+            y: 10
+        }
     });
     graphAnswer.addCell(start);
 }
 
-function state(x, y, label){
+function state(x, y, label) {
     var cell = new joint.shapes.fsa.State({
-        position: {x: x, y: y},
-        size: {width: nodeSize, height: nodeSize},
-        attrs: { text: {text: label}}
+        id: label,
+        position: {
+            x: x,
+            y: y
+        },
+        size: {
+            width: nodeSize,
+            height: nodeSize
+        },
+        attrs: {
+            text: {
+                text: label
+            }
+        }
     });
     graphAnswer.addCell(cell);
     return cell;
 }
 
-function link(source, target, label, vertices){
+function link(source, target, label, vertices) {
     var cell = new joint.shapes.fsa.Arrow({
-        source: {id: source.id},
-        target: {id: target.id},
-        labels: [{position: .5, attrs: { text: { text: label || '', 'font-weight': 'bold'}}}],
+        source: {
+            id: source.id
+        },
+        target: {
+            id: target.id
+        },
+        labels: [{
+            position: .5,
+            attrs: {
+                text: {
+                    text: label || '',
+                    'font-weight': 'bold'
+                }
+            }
+        }],
         vertices: vertices || []
     });
     graphAnswer.addCell(cell);
@@ -157,11 +182,11 @@ function newState() {
 }
 
 function makeStart() {
-    removeStart(startState);
     startState = selectedState;
-    var node = graphAnswer.getElementById(startState);
-    node.style(styleStartSelected);
-    selectState(node);
+    if (startLink != null) {
+        graphAnswer.removeCells(startLink);
+    }
+    startLink = link(start, selectedState);
 }
 
 function removeStart(state) {
@@ -198,16 +223,16 @@ function newTransition(literal) {
             if (selectState != fromState) {
                 transitionSetFlag = false;
             } else {
-               // await sleep(500);
+                // await sleep(500);
             }
-        }else{
+        } else {
             transitionSetFlag = false;
             tooMuchTimePassed = true;
         }
     }
-    if(tooMuchTimePassed){
+    if (tooMuchTimePassed) {
         infoTextColor("Das hat zu lange gedauert", "red");
-    }else{
+    } else {
         graphAnswer.add({
             group: 'edges',
             data: {
