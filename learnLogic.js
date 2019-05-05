@@ -32,6 +32,7 @@ var finishStates = new Set();
 
 var states;
 var nodes;
+var links;
 
 var transitions = new Set();
 
@@ -70,14 +71,22 @@ function onLoad() {
 
     states = new Set();
     nodes = new Set();
+    links = new Set();
 
     paperAnswer.on('cell:pointerclick', function (node) {
-        nodes.forEach(element => {
-            paperAnswer.findViewByModel(element).unhighlight();
-        });
+        if (transitionSetFlag) {
+            var l = new link(selectedState, node.model, lbl);
+            links.add(l);
+            transitionSetFlag = false;
+            lbl = null;
+        }
+        unhighlight();
         node.highlight();
         selectedState = node.model;
     });
+
+    var linkView = paperAnswer.linkView;
+    linkView.removeTools();
 
     start = new joint.shapes.fsa.StartState({
         position: {
@@ -132,7 +141,14 @@ function link(source, target, label, vertices) {
     return cell;
 }
 
-
+function unhighlight() {
+    nodes.forEach(element => {
+        paperAnswer.findViewByModel(element).unhighlight();
+    });
+    links.forEach(element => {
+        paperAnswer.findViewByModel(element).unhighlight();
+    });
+}
 
 // function selectState(node) {
 //     states.forEach(state => {
@@ -184,9 +200,11 @@ function newState() {
 function makeStart() {
     startState = selectedState;
     if (startLink != null) {
+        links.delete(startLink);
         graphAnswer.removeCells(startLink);
     }
     startLink = link(start, selectedState);
+    links.add(startLink);
 }
 
 function removeStart(state) {
@@ -216,32 +234,9 @@ function newTransition(literal) {
     var fromState = selectedState;
     infoTextColor("Bitte auf das Ziel klicken");
     transitionSetFlag = true;
+    lbl = literal;
     var timeAtStart = new Date().getTime();
     var tooMuchTimePassed = false;
-    while (transitionSetFlag) {
-        if (new Date().getTime() - 30000 <= timeAtStart) {
-            if (selectState != fromState) {
-                transitionSetFlag = false;
-            } else {
-                // await sleep(500);
-            }
-        } else {
-            transitionSetFlag = false;
-            tooMuchTimePassed = true;
-        }
-    }
-    if (tooMuchTimePassed) {
-        infoTextColor("Das hat zu lange gedauert", "red");
-    } else {
-        graphAnswer.add({
-            group: 'edges',
-            data: {
-                source: fromState,
-                target: selectedState,
-                label: literal
-            }
-        });
-    }
 }
 
 function sleep(ms) {
