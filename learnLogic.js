@@ -78,6 +78,8 @@ function onLoad() {
         unhighlight();
         node.highlight();
         selectedState = node.model;
+
+        finishButtonText();
     });
 
     start = new joint.shapes.fsa.StartState({
@@ -134,11 +136,8 @@ function link(source, target, label, vertices) {
 }
 
 function unhighlight() {
-    nodes.forEach(element => {
-        paperAnswer.findViewByModel(element).unhighlight();
-    });
-    if (graphAnswer.getLinks().length <= 0) {
-        graphAnswer.getLinks().forEach(element => {
+    if (graphAnswer.getCells().length > 0) {
+        graphAnswer.getCells().forEach(element => {
             paperAnswer.findViewByModel(element).unhighlight();
         });
     }
@@ -197,15 +196,14 @@ function deleteState() {
 }
 
 function makeFinish() {
-    var node = graphAnswer.getElementById(selectedState);
     if (finishStates.has(selectedState)) {
-        node.style(styleSelected);
         finishStates.delete(selectedState);
+        selectedState = new joint.shapes.fsa.State(selectedState);
     } else {
-        node.style(styleFinishSelected);
         finishStates.add(selectedState);
+        selectedState = new joint.shapes.fsa.EndState(selectedState);
     }
-    selectState(node);
+    finishButtonText();
 }
 
 function newTransition(literal) {
@@ -240,4 +238,12 @@ function setTransition(node, lbl) {
     }
     transitionSetFlag = false;
     lbl = null;
+}
+
+function finishButtonText() {
+    if (finishStates.has(selectedState)) {
+        document.getElementById("makeFinish").textContent = "Zielzustand entfernen";
+    } else {
+        document.getElementById("makeFinish").textContent = "Zum Zielzustand machen";
+    }
 }
