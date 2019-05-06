@@ -198,10 +198,10 @@ function deleteState() {
 function makeFinish() {
     if (finishStates.has(selectedState)) {
         finishStates.delete(selectedState);
-        selectedState = new joint.shapes.fsa.State(selectedState);
+        selectedState.attr('circle/fill', 'white');
     } else {
         finishStates.add(selectedState);
-        selectedState = new joint.shapes.fsa.EndState(selectedState);
+        selectedState.attr('circle/fill', 'yellow');
     }
     finishButtonText();
 }
