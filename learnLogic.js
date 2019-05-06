@@ -32,7 +32,6 @@ var finishStates = new Set();
 
 var states;
 var nodes;
-var links;
 
 var transitions = new Set();
 
@@ -71,12 +70,10 @@ function onLoad() {
 
     states = new Set();
     nodes = new Set();
-    links = new Set();
 
     paperAnswer.on('cell:pointerclick', function (node) {
         if (transitionSetFlag) {
-            var l = new link(selectedState, node.model, lbl);
-            links.add(l);
+            link(selectedState, node.model, lbl);
             transitionSetFlag = false;
             lbl = null;
         }
@@ -84,9 +81,6 @@ function onLoad() {
         node.highlight();
         selectedState = node.model;
     });
-
-    var linkView = paperAnswer.linkView;
-    linkView.removeTools();
 
     start = new joint.shapes.fsa.StartState({
         position: {
@@ -136,6 +130,10 @@ function link(source, target, label, vertices) {
             }
         }],
         vertices: vertices || []
+        // toolMarkup: [
+        //     '<g class="link-tool">',
+        //     '<g class="tool-remove" event="tool-remove">'
+        // ]
     });
     graphAnswer.addCell(cell);
     return cell;
@@ -145,9 +143,11 @@ function unhighlight() {
     nodes.forEach(element => {
         paperAnswer.findViewByModel(element).unhighlight();
     });
-    links.forEach(element => {
-        paperAnswer.findViewByModel(element).unhighlight();
-    });
+    if (graphAnswer._edges.size <= 0) {
+        graphAnswer._edges.forEach(element => {
+            paperAnswer.findViewByModel(element).unhighlight();
+        });
+    }
 }
 
 // function selectState(node) {
@@ -200,11 +200,9 @@ function newState() {
 function makeStart() {
     startState = selectedState;
     if (startLink != null) {
-        links.delete(startLink);
         graphAnswer.removeCells(startLink);
     }
     startLink = link(start, selectedState);
-    links.add(startLink);
 }
 
 function removeStart(state) {
@@ -213,9 +211,10 @@ function removeStart(state) {
 }
 
 function deleteState() {
-    graphAnswer.remove(selectedState);
-    states.delete(selectedState);
-    selectState(null);
+    graphAnswer.removeCells(selectedState);
+    states.delete(selectedState.id);
+    nodes.delete(selectedState);
+    selectedState = null;
 }
 
 function makeFinish() {
@@ -237,8 +236,4 @@ function newTransition(literal) {
     lbl = literal;
     var timeAtStart = new Date().getTime();
     var tooMuchTimePassed = false;
-}
-
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
 }
