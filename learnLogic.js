@@ -73,9 +73,7 @@ function onLoad() {
 
     paperAnswer.on('cell:pointerclick', function (node) {
         if (transitionSetFlag) {
-            link(selectedState, node.model, lbl);
-            transitionSetFlag = false;
-            lbl = null;
+            setTransition(node.model, lbl);
         }
         unhighlight();
         node.highlight();
@@ -130,10 +128,6 @@ function link(source, target, label, vertices) {
             }
         }],
         vertices: vertices || []
-        // toolMarkup: [
-        //     '<g class="link-tool">',
-        //     '<g class="tool-remove" event="tool-remove">'
-        // ]
     });
     graphAnswer.addCell(cell);
     return cell;
@@ -143,27 +137,12 @@ function unhighlight() {
     nodes.forEach(element => {
         paperAnswer.findViewByModel(element).unhighlight();
     });
-    if (graphAnswer._edges.size <= 0) {
-        graphAnswer._edges.forEach(element => {
+    if (graphAnswer.getLinks().length <= 0) {
+        graphAnswer.getLinks().forEach(element => {
             paperAnswer.findViewByModel(element).unhighlight();
         });
     }
 }
-
-// function selectState(node) {
-//     states.forEach(state => {
-//         var node = graphAnswer.getElementById(state);
-//         node.style(getStyle((state == selectedState), (state == startState), (finishStates.has(state))));
-//     });
-//     var id = node.id();
-//     node.style(getStyle((id == selectedState), (id == startState), (id == finishStates)));
-//     if (finishStates.has(id)) {
-//         document.getElementById("makeFinish").textContent = "Zielzustand entfernen";
-//     } else {
-//         document.getElementById("makeFinish").textContent = "Zum Zielzustand machen";
-//     }
-//     selectedState = node.id();
-// }
 
 function infoText(txt) {
     document.getElementById("infobox").innerHTML = txt;
@@ -230,10 +209,31 @@ function makeFinish() {
 }
 
 function newTransition(literal) {
-    var fromState = selectedState;
     infoTextColor("Bitte auf das Ziel klicken");
     transitionSetFlag = true;
     lbl = literal;
-    var timeAtStart = new Date().getTime();
-    var tooMuchTimePassed = false;
+}
+
+function setTransition(node, lbl) {
+    var from = selectedState.id;
+    var to = node.id;
+    var newNeeded = true;
+    if (graphAnswer.getLinks().length > 0) {
+        graphAnswer.getLinks().forEach(linkId => {
+            graphAnswer.getCells().forEach(graphCell => {
+                if (linkId.id == graphCell.id && newNeeded) {
+                    if (from == graphCell.source().id && to == graphCell.target().id) {
+                        // graphCell.attributes.labels[0].attrs.text.text += (", " + lbl);
+                        graphCell.attr('text/text', '0, 1');
+                        newNeeded = false;
+                    }
+                }
+            });
+        });
+    }
+    if (newNeeded) {
+        link(selectedState, node, lbl);
+    }
+    transitionSetFlag = false;
+    lbl = null;
 }
