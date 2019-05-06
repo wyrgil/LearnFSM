@@ -209,7 +209,7 @@ function makeFinish() {
 }
 
 function newTransition(literal) {
-    infoTextColor("Bitte auf das Ziel klicken");
+    infoTextColor("Bitte auf das Ziel klicken", "black");
     transitionSetFlag = true;
     lbl = literal;
 }
@@ -223,8 +223,12 @@ function setTransition(node, lbl) {
             graphAnswer.getCells().forEach(graphCell => {
                 if (linkId.id == graphCell.id && newNeeded) {
                     if (from == graphCell.source().id && to == graphCell.target().id) {
-                        // graphCell.attributes.labels[0].attrs.text.text += (", " + lbl);
-                        graphCell.attr('text/text', '0, 1');
+                        if (graphCell.attributes.labels[0].attrs.text.text.includes(lbl)) {
+                            infoTextColor("Diese Transition existiert bereits.", "red");
+                        } else {
+                            graphCell.attributes.labels[0].attrs.text.text = ("0 , 1");
+                            graphCell.attr('text/text', '0, 1');
+                        }
                         newNeeded = false;
                     }
                 }
