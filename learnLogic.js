@@ -14,6 +14,7 @@ var delta = 130;
 var graphAnswer;
 var paperAnswer;
 var graphQuestion;
+var paperQuestion;
 
 /**
  * This is all for cyAnswer
@@ -66,6 +67,16 @@ function onLoad() {
         heigth: '60%',
         gridSize: 1,
         model: graphAnswer
+    });
+
+    graphQuestion = new joint.dia.Graph;
+
+    paperQuestion = new joint.dia.Paper({
+        el: $('#paperQuestion'),
+        width: '100%',
+        heigth: '30%',
+        gridSize: 1,
+        model: graphQuestion
     });
 
     states = new Set();

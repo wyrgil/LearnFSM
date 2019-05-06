@@ -12,9 +12,9 @@ body {
     top: 0;
 }
 
-#cy-question {
-    background-color: white;
-    height: 30%;
+#paperQuestion {
+    background-color: #d3d3d3;
+    height: 30% !important;
     width: 100%;
     position: relative;
     left: 0;
