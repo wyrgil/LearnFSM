@@ -113,6 +113,15 @@ function onLoad() {
     graphAnswer.addCell(start);
 
     loadQuestion();
+
+    paperQuestion.on('cell:pointerclick', function (node) {
+        if (graphQuestion.getCells().length > 0) {
+            graphQuestion.getCells().forEach(element => {
+                paperQuestion.findViewByModel(element).unhighlight();
+            });
+        }
+        node.highlight();
+    });
 }
 
 /**
@@ -257,35 +266,47 @@ function newState() {
  * Sets the currently selected state as the start state of the answer graph.
  */
 function makeStart() {
-    startState = selectedState;
-    if (startLink != null) {
-        graphAnswer.removeCells(startLink);
+    if (selectedState == null) {
+        infoTextColor("Es muss zuerst ein Zustand ausgewählt werden.", "red");
+    } else {
+        startState = selectedState;
+        if (startLink != null) {
+            graphAnswer.removeCells(startLink);
+        }
+        startLink = link(start, selectedState);
     }
-    startLink = link(start, selectedState);
 }
 
 /**
  * Removes the currently selected state from the answer graph.
  */
 function deleteState() {
-    graphAnswer.removeCells(selectedState);
-    states.delete(selectedState.id);
-    nodes.delete(selectedState);
-    selectedState = null;
+    if (selectedState == null) {
+        infoTextColor("Es muss zuerst ein Zustand ausgewählt werden.", "red");
+    } else {
+        graphAnswer.removeCells(selectedState);
+        states.delete(selectedState.id);
+        nodes.delete(selectedState);
+        selectedState = null;
+    }
 }
 
 /**
  * Sets the currently selected state as a finish state of the answer graph.
  */
 function makeFinish() {
-    if (finishStates.has(selectedState)) {
-        finishStates.delete(selectedState);
-        selectedState.attr('circle/fill', 'white');
+    if (selectedState == null) {
+        infoTextColor("Es muss zuerst ein Zustand ausgewählt werden.", "red");
     } else {
-        finishStates.add(selectedState);
-        selectedState.attr('circle/fill', 'yellow');
+        if (finishStates.has(selectedState)) {
+            finishStates.delete(selectedState);
+            selectedState.attr('circle/fill', 'white');
+        } else {
+            finishStates.add(selectedState);
+            selectedState.attr('circle/fill', 'yellow');
+        }
+        finishButtonText();
     }
-    finishButtonText();
 }
 
 /**
@@ -512,5 +533,17 @@ function check() {
 }
 
 function answerToFSM() {
+    var trans = new Array();
+    var start;
+    var states = new Array();
+    var ends = new Array();
 
+    if (graphAnswer.getLinks().length > 0) {
+        graphAnswer.getLinks().forEach(link => {
+            trans.add({
+                from: link.source().id,
+                sign: "0"
+            });
+        });
+    }
 }
