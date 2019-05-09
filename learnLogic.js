@@ -1,5 +1,5 @@
 /**
- * These are vaules associated with positioning of state representations in cyAnswer
+ * These are vaules associated with positioning of state representations in cyAnswer.
  */
 var selectedState;
 var xPos;
@@ -9,7 +9,7 @@ var offsetY = 80;
 var delta = 130;
 
 /**
- * These two variables are the cytoscape models for question and answer
+ * These two variables are the cytoscape models for question and answer.
  */
 var graphAnswer;
 var paperAnswer;
@@ -17,7 +17,7 @@ var graphQuestion;
 var paperQuestion;
 
 /**
- * This is all for cyAnswer
+ * This is all for cyAnswer.
  */
 var border = 2;
 var borderActive = 4;
@@ -38,29 +38,22 @@ var transitions = new Set();
 
 var transitionSetFlag = false;
 
-function getStyle(selected, start, finish) {
-    var sel = selected ? borderActive : border;
-    var sta = start ? 'green' : 'black';
-    var fin = finish ? 'yellow' : 'white';
-
-    return {
-        'text-valign': 'center',
-        'text-halign': 'center',
-        'width': nodeSize,
-        'height': nodeSize,
-        'background-color': fin,
-        'border-width': sel,
-        'border-color': sta
-    }
-}
-
+/**
+ * This method is called by the browser after all DOM content is loaded.
+ */
 function onLoad() {
     xPos = 0;
 
     yPos = 0;
 
+    /**
+     * The JointJS graph instance for the answer part.
+     */
     graphAnswer = new joint.dia.Graph;
 
+    /**
+     * The JointJS paper instance for the answer part.
+     */
     paperAnswer = new joint.dia.Paper({
         el: $('#paperAnswer'),
         width: '100%',
@@ -69,8 +62,14 @@ function onLoad() {
         model: graphAnswer
     });
 
+    /**
+     * The JointJS graph instance for the question part.
+     */
     graphQuestion = new joint.dia.Graph;
 
+    /**
+     * The JointJS paper instance for the question part.
+     */
     paperQuestion = new joint.dia.Paper({
         el: $('#paperQuestion'),
         width: '100%',
@@ -82,6 +81,9 @@ function onLoad() {
     states = new Set();
     nodes = new Set();
 
+    /**
+     * Attaches an onClick handler to graph cells for answer paper.
+     */
     paperAnswer.on('cell:pointerclick', function (node) {
         if (transitionSetFlag) {
             setTransition(node.model, lbl);
@@ -93,6 +95,9 @@ function onLoad() {
         finishButtonText();
     });
 
+    /**
+     * Creates the "Start state" for the answer graph.
+     */
     start = new joint.shapes.fsa.StartState({
         position: {
             x: 10,
@@ -102,6 +107,13 @@ function onLoad() {
     graphAnswer.addCell(start);
 }
 
+/**
+ * Creates a new state and attaches it to the answer graph.
+ * 
+ * @param {Number} x : x position of cell.
+ * @param {Number} y : y position of cell.
+ * @param {String} label : Name of cell.
+ */
 function state(x, y, label) {
     var cell = new joint.shapes.fsa.State({
         id: label,
@@ -123,6 +135,14 @@ function state(x, y, label) {
     return cell;
 }
 
+/**
+ * Creates a new transition between two cells in the answer graph.
+ * 
+ * @param {Cell} source : The cell from which the transition starts.
+ * @param {Cell} target : The cell to whom the transition points.
+ * @param {String} label : Name of the transition (0 or 1).
+ * @param {*} vertices 
+ */
 function link(source, target, label, vertices) {
     var cell = new joint.shapes.fsa.Arrow({
         source: {
@@ -146,6 +166,9 @@ function link(source, target, label, vertices) {
     return cell;
 }
 
+/**
+ * Unhighlights everything in the answer graph.
+ */
 function unhighlight() {
     if (graphAnswer.getCells().length > 0) {
         graphAnswer.getCells().forEach(element => {
@@ -154,15 +177,29 @@ function unhighlight() {
     }
 }
 
+/**
+ * Displays text in the info part at the bottom of the screen.
+ * 
+ * @param {String} txt : Text to be displayed.
+ */
 function infoText(txt) {
     document.getElementById("infobox").innerHTML = txt;
 }
 
+/**
+ * See infoText(), but with colored text.
+ * 
+ * @param {String} txt : Text to be displayed.
+ * @param {String} col : Color of text, can be in 'red' or '#ff0000' format.
+ */
 function infoTextColor(txt, col) {
     infoText(txt);
     document.getElementById("infobox").style.color = col;
 }
 
+/**
+ * Creates a new state to be added to the answer graph.
+ */
 function newState() {
     var stateName = prompt("Wie soll der Zustand heißen?");
     if (stateName == null || stateName == "") {
@@ -186,6 +223,9 @@ function newState() {
     }
 }
 
+/**
+ * Sets the currently selected state as the start state of the answer graph.
+ */
 function makeStart() {
     startState = selectedState;
     if (startLink != null) {
@@ -194,11 +234,9 @@ function makeStart() {
     startLink = link(start, selectedState);
 }
 
-function removeStart(state) {
-    var node = graphAnswer.getElementById(state);
-    node.style((styleUnselected));
-}
-
+/**
+ * Removes the currently selected state from the answer graph.
+ */
 function deleteState() {
     graphAnswer.removeCells(selectedState);
     states.delete(selectedState.id);
@@ -206,6 +244,9 @@ function deleteState() {
     selectedState = null;
 }
 
+/**
+ * Sets the currently selected state as a finish state of the answer graph.
+ */
 function makeFinish() {
     if (finishStates.has(selectedState)) {
         finishStates.delete(selectedState);
@@ -217,12 +258,24 @@ function makeFinish() {
     finishButtonText();
 }
 
+/**
+ * Adds a new transition from the currently selected state to the next selected state
+ * in the answer graph.
+ * 
+ * @param {String} literal : Name of the transition (0 or 1)
+ */
 function newTransition(literal) {
     infoTextColor("Bitte auf das Ziel klicken", "black");
     transitionSetFlag = true;
     lbl = literal;
 }
 
+/**
+ * Sets the new transition from source to target.
+ * 
+ * @param {Cell} node : Node to which the tranisiton points.
+ * @param {String} lbl : Name of the transition (0 or 1).
+ */
 function setTransition(node, lbl) {
     var from = selectedState.id;
     var to = node.id;
@@ -251,6 +304,10 @@ function setTransition(node, lbl) {
     lbl = null;
 }
 
+/**
+ * Sets the text of the "makeFinish" button to display "add" or "remove",
+ * depending on whether the selected state is a finish state or not.
+ */
 function finishButtonText() {
     if (finishStates.has(selectedState)) {
         document.getElementById("makeFinish").textContent = "Zielzustand entfernen";

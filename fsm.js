@@ -44,9 +44,9 @@ class FSM {
     }
 
     /**
-     * Compares this FSM to another FSM and checks for equality
+     * Compares this FSM to another FSM and checks for equality.
      * 
-     * @param FSM fsm 
+     * @param {FSM} fsm : The finite state machine to be compared to the current one.
      */
     equal(fsm) {
         var mapper = new Map();
