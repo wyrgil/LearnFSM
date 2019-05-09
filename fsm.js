@@ -7,9 +7,9 @@ class FSM {
     constructor() {
         if (arguments.length != 4) {
             this.start = null;
-            this.states = new Set();
-            this.trans = new Set();
-            this.ends = new Set();
+            this.states = new Array();
+            this.trans = new Array();
+            this.ends = new Array();
         } else {
             this.start = arguments[0];
             this.states = arguments[1];

@@ -17,7 +17,7 @@ var graphQuestion;
 var paperQuestion;
 
 /**
- * This is all for cyAnswer.
+ * This is all for the answer part.
  */
 var border = 2;
 var borderActive = 4;
@@ -37,6 +37,12 @@ var nodes;
 var transitions = new Set();
 
 var transitionSetFlag = false;
+
+/**
+ * These variables are for the question part
+ */
+var questionFSM;
+var solutionFSM;
 
 /**
  * This method is called by the browser after all DOM content is loaded.
@@ -105,6 +111,8 @@ function onLoad() {
         }
     });
     graphAnswer.addCell(start);
+
+    loadQuestion();
 }
 
 /**
@@ -164,6 +172,28 @@ function link(source, target, label, vertices) {
     });
     graphAnswer.addCell(cell);
     return cell;
+}
+
+function questionLink(source, target, label) {
+    var cell = new joint.shapes.fsa.Arrow({
+        source: {
+            id: source.id
+        },
+        target: {
+            id: target.id
+        },
+        labels: [{
+            position: .5,
+            attrs: {
+                text: {
+                    text: label || '',
+                    'font-weight': 'bold'
+                }
+            }
+        }],
+        vertices: []
+    });
+    graphQuestion.addCell(cell);
 }
 
 /**
@@ -314,4 +344,173 @@ function finishButtonText() {
     } else {
         document.getElementById("makeFinish").textContent = "Zum Zielzustand machen";
     }
+}
+
+/**
+ * Loads a question.
+ * 
+ * @param {Number} id : Question id (for database).
+ */
+function loadQuestion(id) {
+    var packedQuestion;
+    if (id != null) {
+        //TODO: load question from db.
+    } else {
+        switch (document.getElementById("questionType").innerHTML) {
+            case "minimize":
+                packedQuestion = {
+                    questionText: "Minimieren Sie diesen Automaten.",
+                    questionFSM: {
+                        start: "0",
+                        states: ["0", "1", "2"],
+                        ends: ["1", "2"],
+                        trans: [{
+                            from: "0",
+                            sign: "0",
+                            to: "1"
+                        }, {
+                            from: "0",
+                            sign: "1",
+                            to: "1"
+                        }, {
+                            from: "1",
+                            sign: "0",
+                            to: "2"
+                        }, {
+                            from: "1",
+                            sign: "1",
+                            to: "2"
+                        }, {
+                            from: "2",
+                            sign: "0",
+                            to: "1"
+                        }, {
+                            from: "2",
+                            sign: "1",
+                            to: "1"
+                        }]
+                    },
+                    solutionFSM: {
+                        start: "0",
+                        states: ["0", "1"],
+                        ends: ["1"],
+                        trans: [{
+                            from: "0",
+                            sign: "0",
+                            to: "1"
+                        }, {
+                            from: "0",
+                            sign: "1",
+                            to: "1"
+                        }, {
+                            from: "1",
+                            sign: "0",
+                            to: "1"
+                        }, {
+                            from: "1",
+                            sign: "1",
+                            to: "1"
+                        }]
+                    }
+                }
+                break;
+
+            default:
+                break;
+        }
+    }
+    document.getElementById("questionText").innerHTML = packedQuestion.questionText;
+    questionFSM = new FSM(packedQuestion.questionFSM.start,
+        packedQuestion.questionFSM.states,
+        packedQuestion.questionFSM.trans,
+        packedQuestion.questionFSM.ends);
+    solutionFSM = new FSM(packedQuestion.solutionFSM.start,
+        packedQuestion.solutionFSM.states,
+        packedQuestion.solutionFSM.trans,
+        packedQuestion.solutionFSM.ends);
+
+    drawQuestion(questionFSM);
+}
+
+/**
+ * Takes an FSM and draws it on the questionPaper as a graph.
+ * 
+ * @param {FSM} fsm : The FSM to draw.
+ */
+function drawQuestion(fsm) {
+    start = new joint.shapes.fsa.StartState({
+        position: {
+            x: 10,
+            y: 10
+        }
+    });
+    graphQuestion.addCell(start);
+
+    var xqPos = 0;
+    var yqPos = 0;
+
+    fsm.states.forEach(state => {
+        var cell = new joint.shapes.fsa.State({
+            id: state,
+            position: {
+                x: xqPos + offsetX / 2,
+                y: yqPos + offsetY / 2
+            },
+            size: {
+                width: nodeSize,
+                height: nodeSize
+            },
+            attrs: {
+                text: {
+                    text: state
+                }
+            }
+        });
+        graphQuestion.addCell(cell);
+        if (yqPos == 0) {
+            yqPos += delta;
+        } else {
+            yqPos -= delta;
+            xqPos += delta;
+        }
+    });
+
+    questionLink(start, graphQuestion.getCell(fsm.start));
+
+    fsm.trans.forEach(transition => {
+        var newNeeded = true;
+        if (graphQuestion.getLinks().length > 0) {
+            graphQuestion.getLinks().forEach(linkId => {
+                graphQuestion.getCells().forEach(graphCell => {
+                    if (newNeeded && linkId.id == graphCell.id) {
+                        if (transition.from == graphCell.source().id &&
+                            transition.to == graphCell.target().id) {
+                            if (!graphCell.attributes.labels[0].attrs.text.text.includes(transition.sign)) {
+                                graphCell.attributes.labels[0].attrs.text.text = ("0 , 1");
+                                graphCell.attr('text/text', '0, 1');
+                            }
+                            newNeeded = false;
+                        }
+                    }
+                });
+            });
+        }
+        if (newNeeded) {
+            questionLink(graphQuestion.getCell(transition.from),
+                graphQuestion.getCell(transition.to),
+                transition.sign);
+        }
+    });
+
+    fsm.ends.forEach(end => {
+        graphQuestion.getCell(end).attr('circle/fill', 'yellow');
+    })
+}
+
+function check() {
+    var fsmToCheck = answerToFSM();
+}
+
+function answerToFSM() {
+
 }
