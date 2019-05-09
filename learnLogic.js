@@ -81,7 +81,10 @@ function onLoad() {
         width: '100%',
         heigth: '30%',
         gridSize: 1,
-        model: graphQuestion
+        model: graphQuestion,
+        interactive: function(cellView, method) {
+            return;
+        }
     });
 
     states = new Set();
@@ -90,7 +93,7 @@ function onLoad() {
     /**
      * Attaches an onClick handler to graph cells for answer paper.
      */
-    paperAnswer.on('cell:pointerclick', function (node) {
+    paperAnswer.on('cell:pointerdown', function (node) {
         if (transitionSetFlag) {
             setTransition(node.model, lbl);
         }
@@ -114,7 +117,7 @@ function onLoad() {
 
     loadQuestion();
 
-    paperQuestion.on('cell:pointerclick', function (node) {
+    paperQuestion.on('cell:pointerdown', function (node) {
         if (graphQuestion.getCells().length > 0) {
             graphQuestion.getCells().forEach(element => {
                 paperQuestion.findViewByModel(element).unhighlight();
@@ -149,6 +152,7 @@ function state(x, y, label) {
         }
     });
     graphAnswer.addCell(cell);
+
     return cell;
 }
 
