@@ -48,6 +48,21 @@ var selectedStateQuestion;
 
 var pushToBottomSetFlag = false;
 
+var customHighlighter = {
+    highlighter: {
+        name: 'stroke',
+        options: {
+            padding: 10,
+            rx: 5,
+            ry: 5,
+            attrs: {
+                'stroke-width': 3,
+                stroke: '#00FF00'
+            }
+        }
+    }
+}
+
 /**
  * This method is called by the browser after all DOM content is loaded.
  */
@@ -111,7 +126,19 @@ function onLoad() {
         selectedState = node.model;
 
         finishButtonText();
-        // infoText('');
+        
+        unhighlightQuestion(customHighlighter);
+
+        graphQuestion.getCells().forEach(cell => {
+            if(!graphQuestion.getLinks().includes(cell) && cell.attributes.type != "fsa.StartState"){
+                var textSnippets = selectedState.attributes.attrs.text.text.split(", ");
+                textSnippets.forEach(snip => {
+                    if(cell.attributes.attrs.text.text.includes(snip)){
+                        paperQuestion.findViewByModel(cell).highlight(null, customHighlighter);
+                    }
+                });
+            }
+        });
     });
 
     /**
@@ -130,20 +157,16 @@ function onLoad() {
     loadQuestion();
 
     paperQuestion.on('cell:pointerdown', function (node) {
-        if (graphQuestion.getCells().length > 0) {
-            graphQuestion.getCells().forEach(element => {
-                paperQuestion.findViewByModel(element).unhighlight();
-            });
-        }
+        unhighlightQuestion();
         node.highlight();
         selectedStateQuestion = node.model;
 
-        unhighlight();
+        unhighlight(customHighlighter);
 
         graphAnswer.getCells().forEach(cell => {
             if (!graphAnswer.getLinks().includes(cell) && cell != start) {
-                if (cell.id.includes(selectedStateQuestion.id)) {
-                    paperAnswer.findViewByModel(cell).highlight();
+                if (cell.attributes.attrs.text.text.includes(selectedStateQuestion.id)) {
+                    paperAnswer.findViewByModel(cell).highlight(null, customHighlighter);
                 }
             }
         })
@@ -235,18 +258,18 @@ function questionLink(source, target, label) {
 /**
  * Unhighlights everything in the answer graph.
  */
-function unhighlight() {
+function unhighlight(highlighter) {
     if (graphAnswer.getCells().length > 0) {
         graphAnswer.getCells().forEach(element => {
-            paperAnswer.findViewByModel(element).unhighlight();
+            paperAnswer.findViewByModel(element).unhighlight(null, highlighter);
         });
     }
 }
 
-function unhighlightQuestion() {
+function unhighlightQuestion(highlighter) {
     if (graphQuestion.getCells().length > 0) {
         graphQuestion.getCells().forEach(element => {
-            paperQuestion.findViewByModel(element).unhighlight();
+            paperQuestion.findViewByModel(element).unhighlight(null, highlighter);
         });
     }
 }
