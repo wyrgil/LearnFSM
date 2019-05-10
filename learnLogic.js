@@ -48,6 +48,9 @@ var selectedStateQuestion;
 
 var pushToBottomSetFlag = false;
 
+/**
+ * This is used to highlight corresponding states in the other paper.
+ */
 var customHighlighter = {
     highlighter: {
         name: 'stroke',
@@ -156,6 +159,9 @@ function onLoad() {
 
     loadQuestion();
 
+    /**
+     * Attaches an onClick handler to graph cells for question paper.
+     */
     paperQuestion.on('cell:pointerdown', function (node) {
         unhighlightQuestion();
         node.highlight();
@@ -233,6 +239,13 @@ function link(source, target, label, vertices) {
     return cell;
 }
 
+/**
+ * Used for creating transitions in question graph.
+ * 
+ * @param {Cell} source : Source cell.
+ * @param {Cell} target : Target cell.
+ * @param {String} label : Transition label (0 or 1).
+ */
 function questionLink(source, target, label) {
     var cell = new joint.shapes.fsa.Arrow({
         source: {
@@ -257,6 +270,8 @@ function questionLink(source, target, label) {
 
 /**
  * Unhighlights everything in the answer graph.
+ * 
+ * @param {*} highlighter : Custom highlighter to be unhighlighted.
  */
 function unhighlight(highlighter) {
     if (graphAnswer.getCells().length > 0) {
@@ -266,6 +281,11 @@ function unhighlight(highlighter) {
     }
 }
 
+/**
+ * Unhighlights everything in the question graph.
+ * 
+ * @param {*} highlighter : Custom highlighter to be unhighlighted.
+ */
 function unhighlightQuestion(highlighter) {
     if (graphQuestion.getCells().length > 0) {
         graphQuestion.getCells().forEach(element => {
@@ -606,6 +626,9 @@ function drawQuestion(fsm) {
     })
 }
 
+/**
+ * Cheks if the given answer is the same as the set solution.
+ */
 function check() {
     var fsmToCheck = answerToFSM();
     var equality;
@@ -621,6 +644,9 @@ function check() {
     }
 }
 
+/**
+ * This casts the given answer to a new FSM.
+ */
 function answerToFSM() {
     var trans = new Array();
     var startName;
@@ -649,6 +675,9 @@ function answerToFSM() {
     return new FSM(startName, Array.from(states), trans, ends);
 }
 
+/**
+ * Adds the selected state from the question graph to the answer graph.
+ */
 function addToBottom() {
     if (!graphQuestion.getLinks().includes(selectedStateQuestion)) {
         newState(selectedStateQuestion.id);
@@ -657,6 +686,10 @@ function addToBottom() {
     }
 }
 
+/**
+ * Adds the text of the selected state from the question graph to the selected State
+ * of the answer graph.
+ */
 function pushToBottom() {
     if (!selectedStateQuestion) {
         infoTextColor("Es muss ein Zustand ausgewählt sein.", "red");
@@ -678,6 +711,11 @@ function pushToBottom() {
     }
 }
 
+/**
+ * Actual logic for adding text to answer state.
+ * 
+ * @param {*} cellId : Cell to get name enlarged.
+ */
 function pushStateToSelectedBottomState(cellId) {
     var isTransition = false;
 
