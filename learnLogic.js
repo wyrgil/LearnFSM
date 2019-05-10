@@ -129,19 +129,21 @@ function onLoad() {
         selectedState = node.model;
 
         finishButtonText();
-        
+
         unhighlightQuestion(customHighlighter);
 
-        graphQuestion.getCells().forEach(cell => {
-            if(!graphQuestion.getLinks().includes(cell) && cell.attributes.type != "fsa.StartState"){
-                var textSnippets = selectedState.attributes.attrs.text.text.split(", ");
-                textSnippets.forEach(snip => {
-                    if(cell.attributes.attrs.text.text.includes(snip)){
-                        paperQuestion.findViewByModel(cell).highlight(null, customHighlighter);
-                    }
-                });
-            }
-        });
+        if (!graphAnswer.getLinks().includes(node.model) && node.model != start) {
+            graphQuestion.getCells().forEach(cell => {
+                if (!graphQuestion.getLinks().includes(cell) && cell.attributes.type != "fsa.StartState") {
+                    var textSnippets = selectedState.attributes.attrs.text.text.split(", ");
+                    textSnippets.forEach(snip => {
+                        if (cell.attributes.attrs.text.text.includes(snip)) {
+                            paperQuestion.findViewByModel(cell).highlight(null, customHighlighter);
+                        }
+                    });
+                }
+            });
+        }
     });
 
     /**
@@ -217,6 +219,9 @@ function state(x, y, label) {
  * @param {*} vertices 
  */
 function link(source, target, label, vertices) {
+    var vertex;
+    vertex = getHalfcircleVertex(source, target);
+    vertices = [vertex];
     var cell = new joint.shapes.fsa.Arrow({
         source: {
             id: source.id
@@ -745,4 +750,25 @@ function pushStateToSelectedBottomState(cellId) {
             infoTextColor("Dieser Zustand hat diesen Namen bereits.", "red");
         }
     }
+}
+
+function getHalfcircleVertex(source, target) {
+    var sx = source.position().x;
+    var sy = source.position().y;
+    var tx = target.position().x;
+    var ty = target.position().y;
+
+    tx = tx - sx;
+    ty = ty - sy;
+
+    var mx = tx / 2;
+    var my = ty / 2;
+
+    var vx = ((ty - my) / 2) + sx;
+    var vy = -(tx - mx) / 2 + sy;
+
+    return {
+        x: vx,
+        y: vy
+    };
 }
