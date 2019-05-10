@@ -119,6 +119,8 @@ function onLoad() {
     });
     graphAnswer.addCell(start);
 
+    start = graphAnswer.getCells()[0];
+
     loadQuestion();
 
     paperQuestion.on('cell:pointerdown', function (node) {
@@ -128,7 +130,17 @@ function onLoad() {
             });
         }
         node.highlight();
-        selectedStateQuestion = node;
+        selectedStateQuestion = node.model;
+
+        unhighlight();
+
+        graphAnswer.getCells().forEach(cell => {
+            if(!graphAnswer.getLinks().includes(cell) && cell != start){
+                if(cell.id.includes(selectedStateQuestion.id)){
+                    paperAnswer.findViewByModel(cell).highlight();
+                }
+            }
+        })
     });
 }
 
@@ -225,6 +237,14 @@ function unhighlight() {
     }
 }
 
+function unhighlightQuestion() {
+    if (graphQuestion.getCells().length > 0) {
+        graphQuestion.getCells().forEach(element => {
+            paperQuestion.findViewByModel(element).unhighlight();
+        });
+    }
+}
+
 /**
  * Displays text in the info part at the bottom of the screen.
  * 
@@ -250,9 +270,9 @@ function infoTextColor(txt, col) {
  */
 function newState(fromTop) {
     var stateName;
-    if(!fromTop){
+    if (!fromTop) {
         stateName = prompt("Wie soll der Zustand heißen?");
-    }else{
+    } else {
         stateName = fromTop;
     }
     if (stateName == null || stateName == "") {
@@ -411,55 +431,55 @@ function loadQuestion(id) {
                 packedQuestion = {
                     questionText: "Minimieren Sie diesen Automaten.",
                     questionFSM: {
-                        start: "0",
-                        states: ["0", "1", "2"],
-                        ends: ["1", "2"],
+                        start: "q0",
+                        states: ["q0", "q1", "q2"],
+                        ends: ["q1", "q2"],
                         trans: [{
-                            from: "0",
+                            from: "q0",
                             sign: "0",
-                            to: "1"
+                            to: "q1"
                         }, {
-                            from: "0",
+                            from: "q0",
                             sign: "1",
-                            to: "1"
+                            to: "q1"
                         }, {
-                            from: "1",
+                            from: "q1",
                             sign: "0",
-                            to: "2"
+                            to: "q2"
                         }, {
-                            from: "1",
+                            from: "q1",
                             sign: "1",
-                            to: "2"
+                            to: "q2"
                         }, {
-                            from: "2",
+                            from: "q2",
                             sign: "0",
-                            to: "1"
+                            to: "q1"
                         }, {
-                            from: "2",
+                            from: "q2",
                             sign: "1",
-                            to: "1"
+                            to: "q1"
                         }]
                     },
                     solutionFSM: {
-                        start: "0",
-                        states: ["0", "1"],
-                        ends: ["1"],
+                        start: "q0",
+                        states: ["q0", "q1"],
+                        ends: ["q1"],
                         trans: [{
-                            from: "0",
+                            from: "q0",
                             sign: "0",
-                            to: "1"
+                            to: "q1"
                         }, {
-                            from: "0",
+                            from: "q0",
                             sign: "1",
-                            to: "1"
+                            to: "q1"
                         }, {
-                            from: "1",
+                            from: "q1",
                             sign: "0",
-                            to: "1"
+                            to: "q1"
                         }, {
-                            from: "1",
+                            from: "q1",
                             sign: "1",
-                            to: "1"
+                            to: "q1"
                         }]
                     }
                 }
@@ -488,13 +508,13 @@ function loadQuestion(id) {
  * @param {FSM} fsm : The FSM to draw.
  */
 function drawQuestion(fsm) {
-    start = new joint.shapes.fsa.StartState({
+    var startQuestion = new joint.shapes.fsa.StartState({
         position: {
             x: 10,
             y: 10
         }
     });
-    graphQuestion.addCell(start);
+    graphQuestion.addCell(startQuestion);
 
     var xqPos = 0;
     var yqPos = 0;
@@ -525,7 +545,7 @@ function drawQuestion(fsm) {
         }
     });
 
-    questionLink(start, graphQuestion.getCell(fsm.start));
+    questionLink(startQuestion, graphQuestion.getCell(fsm.start));
 
     fsm.trans.forEach(transition => {
         var newNeeded = true;
@@ -603,6 +623,14 @@ function answerToFSM() {
     return new FSM(startName, Array.from(states), trans, ends);
 }
 
-function addToBottom(){
-    newState(selectedStateQuestion.model.id);
+function addToBottom() {
+    if (!graphQuestion.getLinks().includes(selectedStateQuestion)) {
+        newState(selectedStateQuestion.id);
+    } else {
+        infoTextColor("Bitte einen Zustand auswählen.", "red");
+    }
+}
+
+function pushToBottom(){
+    
 }
