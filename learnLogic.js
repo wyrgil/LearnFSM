@@ -46,6 +46,8 @@ var solutionFSM;
 
 var selectedStateQuestion;
 
+var pushToBottomSetFlag = false;
+
 /**
  * This method is called by the browser after all DOM content is loaded.
  */
@@ -96,6 +98,10 @@ function onLoad() {
      * Attaches an onClick handler to graph cells for answer paper.
      */
     paperAnswer.on('cell:pointerdown', function (node) {
+        if (pushToBottomSetFlag) {
+            pushStateToSelectedBottomState(node.model);
+        }
+
         if (transitionSetFlag) {
             setTransition(node.model, lbl);
             // infoText('');
@@ -135,8 +141,8 @@ function onLoad() {
         unhighlight();
 
         graphAnswer.getCells().forEach(cell => {
-            if(!graphAnswer.getLinks().includes(cell) && cell != start){
-                if(cell.id.includes(selectedStateQuestion.id)){
+            if (!graphAnswer.getLinks().includes(cell) && cell != start) {
+                if (cell.id.includes(selectedStateQuestion.id)) {
                     paperAnswer.findViewByModel(cell).highlight();
                 }
             }
@@ -628,6 +634,54 @@ function addToBottom() {
     }
 }
 
-function pushToBottom(){
+function pushToBottom() {
+    if (!selectedStateQuestion) {
+        infoTextColor("Es muss ein Zustand ausgewählt sein.", "red");
+    } else {
 
+        var isTransition = false;
+
+        graphQuestion.getLinks().forEach(element => {
+            if (selectedStateQuestion == element) {
+                isTransition = true;
+            }
+        });
+        if (isTransition) {
+            infoTextColor("Es muss ein Zustand ausgewählt sein.", "red");
+        } else {
+            pushToBottomSetFlag = true;
+            infoTextColor("Bitte einen Zustand auswählen.", "black");
+        }
+    }
+}
+
+function pushStateToSelectedBottomState(cellId) {
+    var isTransition = false;
+
+    graphAnswer.getLinks().forEach(element => {
+        if (graphAnswer.getCell(cellId) == element) {
+            isTransition = true;
+        }
+    });
+
+    if (isTransition) {
+        infoTextColor("Das ausgewählte Element ist eine Transition.", "red");
+    } else {
+        if (!graphAnswer.getCell(cellId.id).attributes.attrs.text.text.includes(selectedStateQuestion.id)) {
+            var newText;
+            newText = graphAnswer.getCell(cellId.id).attributes.attrs.text.text + ", " + selectedStateQuestion.id;
+            if ((splitText = newText.split(", ")).length > 2) {
+                for (var i = 2; i < splitText.length; i += 2) {
+                    splitText[i] = "\n" + splitText[i];
+                }
+                newText = splitText.join(', ');
+            }
+            var cellToChange = graphAnswer.getCell(cellId.id);
+            // cellToChange.id = newText;
+            cellToChange.attr('text/text', newText);
+            pushToBottomSetFlag = false;
+        } else {
+            infoTextColor("Dieser Zustand hat diesen Namen bereits.", "red");
+        }
+    }
 }
