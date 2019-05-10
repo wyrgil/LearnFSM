@@ -44,6 +44,8 @@ var transitionSetFlag = false;
 var questionFSM;
 var solutionFSM;
 
+var selectedStateQuestion;
+
 /**
  * This method is called by the browser after all DOM content is loaded.
  */
@@ -96,14 +98,14 @@ function onLoad() {
     paperAnswer.on('cell:pointerdown', function (node) {
         if (transitionSetFlag) {
             setTransition(node.model, lbl);
-            infoText('');
+            // infoText('');
         }
         unhighlight();
         node.highlight();
         selectedState = node.model;
 
         finishButtonText();
-        infoText('');
+        // infoText('');
     });
 
     /**
@@ -126,6 +128,7 @@ function onLoad() {
             });
         }
         node.highlight();
+        selectedStateQuestion = node;
     });
 }
 
@@ -245,8 +248,13 @@ function infoTextColor(txt, col) {
 /**
  * Creates a new state to be added to the answer graph.
  */
-function newState() {
-    var stateName = prompt("Wie soll der Zustand heißen?");
+function newState(fromTop) {
+    var stateName;
+    if(!fromTop){
+        stateName = prompt("Wie soll der Zustand heißen?");
+    }else{
+        stateName = fromTop;
+    }
     if (stateName == null || stateName == "") {
         infoText("Neuen Zustand erstellen abgebrochen.");
     } else {
@@ -322,9 +330,13 @@ function makeFinish() {
  * @param {String} literal : Name of the transition (0 or 1)
  */
 function newTransition(literal) {
-    infoTextColor("Bitte auf das Ziel klicken", "black");
-    transitionSetFlag = true;
-    lbl = literal;
+    if (selectedState != null) {
+        infoTextColor("Bitte auf das Ziel klicken", "black");
+        transitionSetFlag = true;
+        lbl = literal;
+    } else {
+        infoTextColor("Bitte erst einen Zustand auswählen", "red");
+    }
 }
 
 /**
@@ -354,8 +366,19 @@ function setTransition(node, lbl) {
             });
         });
     }
+    if (graphAnswer.getLinks().length > 0) {
+        graphAnswer.getLinks().forEach(linkId => {
+            if (newNeeded && from == linkId.source().id) {
+                if (linkId.label().attrs.text.text.includes(lbl)) {
+                    infoTextColor("Dieser Zustand hat bereits eine Transition mit diesem Literal.", "red");
+                    newNeeded = false;
+                }
+            }
+        });
+    }
     if (newNeeded) {
         link(selectedState, node, lbl);
+        infoTextColor("Transition erfolgreich erstellt.", "black");
     }
     transitionSetFlag = false;
     lbl = null;
@@ -539,6 +562,17 @@ function check() {
     var equality;
     equality = fsmToCheck.equal(solutionFSM);
     console.log(equality);
+    var alertText = equality ? "Diese Antwort ist korrekt\nWeiter zur nächsten frage?" :
+        "Diese Antwort ist leider falsch. Erneut versuchen?";
+    if (equality) {
+        if (confirm(alertText)) {
+            onLoad();
+        }
+    } else {
+        if (confirm(alertText)) {
+            onLoad();
+        }
+    }
 }
 
 function answerToFSM() {
@@ -567,4 +601,8 @@ function answerToFSM() {
     });
 
     return new FSM(startName, Array.from(states), trans, ends);
+}
+
+function addToBottom(){
+    newState(selectedStateQuestion.model.id);
 }
