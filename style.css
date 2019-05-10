@@ -1,0 +1,33 @@
+body {
+    font: 14px helvetica neue, helvetica, arial, sans-serif;
+    background-color: lightgray;
+}
+
+#questionType {
+    display: none;
+}
+
+#paperAnswer {
+    background-color: white;
+    height: 60%;
+    width: 100%;
+    position: relative;
+    left: 0;
+    top: 0;
+}
+
+#paperQuestion {
+    background-color: #d3d3d3;
+    height: 30% !important;
+    width: 100%;
+    position: relative;
+    left: 0;
+    top: 0;
+}
+
+#buttons {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    z-index: 99999;
+}
