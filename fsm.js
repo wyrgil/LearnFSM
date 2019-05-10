@@ -44,6 +44,11 @@ class FSM {
         return ret;
     }
 
+    /**
+     * Compares the given FSM to this FSM, but just on acceptance level.
+     * 
+     * @param {FSM} fsm : FSM to compare
+     */
     equalLight(fsm) {
         var result = 0;
         var mapper = new Map();
@@ -93,6 +98,8 @@ class FSM {
      * Compares this FSM to another FSM and checks for equality.
      * 
      * @param {FSM} fsm : The finite state machine to be compared to the current one.
+     * 
+     * @returns 0 in case of equality, else a error message.
      */
     equal(fsm) {
         var result = 0;
@@ -122,6 +129,12 @@ class FSM {
 
 }
 
+/**
+ * Compares to arrays if they are equal.
+ * 
+ * @param {Array} arr1
+ * @param {Array} arr2
+ */
 function arrayCompare(arr1, arr2) {
     var result = false;
     var i = 0;
