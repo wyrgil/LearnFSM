@@ -82,7 +82,7 @@ function onLoad() {
         heigth: '30%',
         gridSize: 1,
         model: graphQuestion,
-        interactive: function(cellView, method) {
+        interactive: function (cellView, method) {
             return;
         }
     });
@@ -96,12 +96,14 @@ function onLoad() {
     paperAnswer.on('cell:pointerdown', function (node) {
         if (transitionSetFlag) {
             setTransition(node.model, lbl);
+            infoText('');
         }
         unhighlight();
         node.highlight();
         selectedState = node.model;
 
         finishButtonText();
+        infoText('');
     });
 
     /**
@@ -343,7 +345,7 @@ function setTransition(node, lbl) {
                         if (graphCell.attributes.labels[0].attrs.text.text.includes(lbl)) {
                             infoTextColor("Diese Transition existiert bereits.", "red");
                         } else {
-                            graphCell.attributes.labels[0].attrs.text.text = ("0 , 1");
+                            graphCell.attributes.labels[0].attrs.text.text = ("0, 1");
                             graphCell.attr('text/text', '0, 1');
                         }
                         newNeeded = false;
@@ -534,20 +536,35 @@ function drawQuestion(fsm) {
 
 function check() {
     var fsmToCheck = answerToFSM();
+    var equality;
+    equality = fsmToCheck.equal(solutionFSM);
+    console.log(equality);
 }
 
 function answerToFSM() {
     var trans = new Array();
-    var start;
-    var states = new Array();
+    var startName;
     var ends = new Array();
 
     if (graphAnswer.getLinks().length > 0) {
         graphAnswer.getLinks().forEach(link => {
-            trans.add({
-                from: link.source().id,
-                sign: "0"
-            });
+            if (link != startLink) {
+                link.label().attrs.text.text.split(', ').forEach(splitLabel => {
+                    trans.push({
+                        from: link.source().id,
+                        sign: splitLabel,
+                        to: link.target().id
+                    });
+                });
+            }
         });
     }
+
+    startName = (startState != null) ? startState.id : null;
+
+    finishStates.forEach(fState => {
+        ends.push(fState.id);
+    });
+
+    return new FSM(startName, Array.from(states), trans, ends);
 }
