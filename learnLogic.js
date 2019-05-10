@@ -581,17 +581,14 @@ function check() {
     var fsmToCheck = answerToFSM();
     var equality;
     equality = fsmToCheck.equal(solutionFSM);
-    console.log(equality);
-    var alertText = equality ? "Diese Antwort ist korrekt\nWeiter zur nächsten frage?" :
-        "Diese Antwort ist leider falsch. Erneut versuchen?";
-    if (equality) {
+    var alertText = equality == 0 ? "Diese Antwort ist korrekt\nWeiter zur nächsten frage?" :
+        equality;
+    if (equality == 0) {
         if (confirm(alertText)) {
             onLoad();
         }
     } else {
-        if (confirm(alertText)) {
-            onLoad();
-        }
+        alert(alertText);
     }
 }
 
@@ -632,5 +629,5 @@ function addToBottom() {
 }
 
 function pushToBottom(){
-    
+
 }

@@ -37,33 +37,15 @@ class FSM {
     getNextState(state, sign) {
         var ret = null;
         this.trans.forEach(t => {
-            if(t.from == state && t.sign == sign){
+            if (t.from == state && t.sign == sign) {
                 ret = t.to;
             }
         });
         return ret;
     }
 
-    /**
-     * Compares this FSM to another FSM and checks for equality.
-     * 
-     * @param {FSM} fsm : The finite state machine to be compared to the current one.
-     */
-    equal(fsm) {
-        var result = true;
-
-        if(this.states.length != fsm.states.length){
-            return false;
-        }
-
-        if(this.ends.length != fsm.ends.length){
-            return false;
-        }
-
-        if(this.trans.length != fsm.trans.length){
-            return false;
-        }
-
+    equalLight(fsm) {
+        var result = 0;
         var mapper = new Map();
         mapper.set(this.start, fsm.start);
 
@@ -77,16 +59,16 @@ class FSM {
                 var qt = this.getNextState(transitions[i][0], s);
                 var qf = fsm.getNextState(transitions[i][1], s);
                 if (this.ends.includes(qt) != fsm.ends.includes(qf)) {
-                    result = false;
+                    result = "Es gibt noch falsche Transitionen.";
                 }
                 mapper.set(qt, qf);
                 var add = true;
                 transitions.forEach(t => {
-                    if(arrayCompare(t, [qt, qf])){
+                    if (arrayCompare(t, [qt, qf])) {
                         add = false;
                     }
                 });
-                if(add){
+                if (add) {
                     transitions.push([qt, qf]);
                 }
             });
@@ -100,11 +82,38 @@ class FSM {
             fins.push(mapper.get(end));
         });
 
-        if (result && arrayCompare(fins, fsm.ends)) {
-            result = true;
+        if (result == 0 && arrayCompare(fins, fsm.ends)) {
+            result = 0;
         }
 
         return result;
+    }
+
+    /**
+     * Compares this FSM to another FSM and checks for equality.
+     * 
+     * @param {FSM} fsm : The finite state machine to be compared to the current one.
+     */
+    equal(fsm) {
+        var result = 0;
+
+        if ((this.states.length > 0 && !this.start) || (fsm.states.length > 0 && !fsm.start)) {
+            return "Es wurde noch kein Startzustand deklariert."
+        }
+
+        if (this.states.length != fsm.states.length) {
+            return "Da fehlen noch Zustände.";
+        }
+
+        if (this.ends.length != fsm.ends.length) {
+            return "Da fehlen noch akzeptierende Zustände.";
+        }
+
+        if (this.trans.length != fsm.trans.length) {
+            return "Da fehlen noch Transitionen.";
+        }
+
+        return equalLight(fsm);
     }
 
     compute(signs) {
@@ -113,12 +122,12 @@ class FSM {
 
 }
 
-function arrayCompare(arr1, arr2){
+function arrayCompare(arr1, arr2) {
     var result = false;
     var i = 0;
-    if(arr1 && arr2){
+    if (arr1 && arr2) {
         result = true;
-        for(i; i < arr1.length && result; i++){
+        for (i; i < arr1.length && result; i++) {
             result = (arr1[i] == arr2[i]);
         }
     }
