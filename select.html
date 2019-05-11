@@ -1,13 +1,25 @@
 <!-- AUTHOR: Marius Santin <marius.santin@gmail.com -->
-<!-- TODO: include js file, setup page -->
 <html>
 
 <head>
     <title>Spielerisch endliche Zustandsautomaten lernen</title>
+    <link href="style.css" rel="stylesheet" />
 </head>
+
 <body>
-    <div>//TODO selection</div>
-    <button onclick="location.href='play.html';" value="Play">Play</button>
+    <section class="selectionTop">
+        <div>Bitte wählen Sie einen Aufgabentyp aus</div>
+    </section>
+    <section class="selectionItems">
+        <div class="selectionItem">
+            <button onclick="location.href='play.html';" value="Play">Minimierungsaufgaben
+            <br><br>Aktuelles Level: 1</button>
+        </div>
+        <div class="selectionItem">
+            <button onclick="location.href='play.html';" value="Play">Nichtdeterministisch zu deterministisch
+            <br><br>Aktuelles Level: 1</button>
+        </div>
+    </section>
 </body>
 
 </html>
