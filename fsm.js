@@ -123,19 +123,26 @@ class FSM {
         return equalLight(fsm);
     }
 
+    /**
+     * Computes if the FSM accepts the given char sequence or not.
+     * 
+     * @param {String} signs : Char sequence to compute.
+     * 
+     * @returns {Boolean} Accept or not.
+     */
     compute(signs) {
         let currentState = this.start;
 
         for (let i = 0; i < signs.length; i++) {
             let sign = signs[i];
             let nextState = null;
-            
+
             this.transitions.forEach(t => {
                 if (t.from == currentState && t.sign == sign) {
                     nextState = t.to;
                 }
             });
-            if(!nextState){
+            if (!nextState) {
                 currentState = null;
                 break;
             }
@@ -144,10 +151,54 @@ class FSM {
         return this.ends.includes(currentState);
     }
 
-    getHints(count){
+    /**
+     * Evaluates the first <count> accepted char sequences for this FSM. 
+     * 
+     * @param {Number} count : Number of hints to give.
+     * 
+     * @returns {String[]} String array of accepted char sequences.
+     */
+    getHints(count) {
         let acceptedStrings = new Array();
+        let visitedStrings = new Array();
 
-        
+        if (this.ends.length <= 0) {
+            //add empty set
+            acceptedStrings.push(String.fromCharCode(8709));
+
+            return acceptedStrings;
+        }
+
+        if (this.ends.includes(this.start)) {
+            //add empty word
+            acceptedStrings.push(String.fromCharCode(949));
+        }
+        visitedStrings.push("");
+
+        return this.getHintsRecursive(acceptedStrings, visitedStrings, count);
+    }
+
+    getHintsRecursive(acceptedStrings, visitedStrings, count) {
+        if (acceptedStrings.length >= count || visitedStrings.length >= 1024) {
+            return acceptedStrings;
+        }
+        let newVisitedStrings = new Array();
+        for (let i = Math.ceil(visitedStrings.length / 2 - 1); i < visitedStrings.length; i++) {
+            let currentVisitedStringAddSign = new Array();
+            currentVisitedStringAddSign.push(visitedStrings[i] + "0");
+            currentVisitedStringAddSign.push(visitedStrings[i] + "1");
+            for (let j = 0; j < currentVisitedStringAddSign.length; j++) {
+                if (this.compute(currentVisitedStringAddSign[j])) {
+                    acceptedStrings.push(currentVisitedStringAddSign[j]);
+                }
+                newVisitedStrings.push(currentVisitedStringAddSign[j]);
+                if (acceptedStrings.length >= count) {
+                    return acceptedStrings;
+                }
+            }
+        }
+        visitedStrings = visitedStrings.concat(newVisitedStrings);
+        return this.getHintsRecursive(acceptedStrings, visitedStrings, count);
     }
 
 }

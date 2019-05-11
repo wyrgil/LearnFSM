@@ -779,4 +779,5 @@ function hintTop(){
 
 function hintBottom(){
     console.log(0b11.toString(2));
+    console.log(String.fromCharCode(8709));
 }
