@@ -31,3 +31,26 @@ body {
     bottom: 0;
     z-index: 99999;
 }
+
+.selectionItem button {
+    margin: auto;
+    border: none;
+    background-color: blue;
+    color: white;
+    font-size: 1.8vw;
+    font-weight: bold;
+    height: -webkit-fill-available;
+    width: -webkit-fill-available;
+    padding: 20px;
+}
+
+.selectionItems {
+    margin-top: 50px;
+    display: inline-grid;
+    text-align: center;
+    margin: auto;
+    grid-template-columns: 45vw 45vw;
+    grid-template-rows: 40vh 40vh;
+    grid-column-gap: 5vw;
+    grid-row-gap: 10vh;
+}
