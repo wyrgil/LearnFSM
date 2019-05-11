@@ -133,12 +133,12 @@ function onLoad() {
         unhighlightQuestion(customHighlighter);
 
         if (!graphAnswer.getLinks().includes(node.model) && node.model != start) {
-            graphQuestion.getCells().forEach(cell => {
-                if (!graphQuestion.getLinks().includes(cell) && cell.attributes.type != "fsa.StartState") {
+            graphQuestion.getElements().forEach(element => {
+                if (element.attributes.type != "fsa.StartState") {
                     var textSnippets = selectedState.attributes.attrs.text.text.split(", ");
                     textSnippets.forEach(snip => {
-                        if (cell.attributes.attrs.text.text.includes(snip)) {
-                            paperQuestion.findViewByModel(cell).highlight(null, customHighlighter);
+                        if (element.attributes.attrs.text.text.includes(snip)) {
+                            paperQuestion.findViewByModel(element).highlight(null, customHighlighter);
                         }
                     });
                 }
@@ -171,10 +171,10 @@ function onLoad() {
 
         unhighlight(customHighlighter);
 
-        graphAnswer.getCells().forEach(cell => {
-            if (!graphAnswer.getLinks().includes(cell) && cell != start) {
-                if (cell.attributes.attrs.text.text.includes(selectedStateQuestion.id)) {
-                    paperAnswer.findViewByModel(cell).highlight(null, customHighlighter);
+        graphAnswer.getElements().forEach(element => {
+            if (element != start) {
+                if (element.attributes.attrs.text.text.includes(selectedStateQuestion.id)) {
+                    paperAnswer.findViewByModel(element).highlight(null, customHighlighter);
                 }
             }
         })
@@ -220,8 +220,8 @@ function state(x, y, label) {
  */
 function link(source, target, label, vertices) {
     var vertex;
-    vertex = getHalfcircleVertex(source, target);
-    vertices = [vertex];
+    // vertex = getHalfcircleVertex(source, target);
+    // vertices = [vertex];
     var cell = new joint.shapes.fsa.Arrow({
         source: {
             id: source.id
@@ -425,14 +425,14 @@ function setTransition(node, lbl) {
     var newNeeded = true;
     if (graphAnswer.getLinks().length > 0) {
         graphAnswer.getLinks().forEach(linkId => {
-            graphAnswer.getCells().forEach(graphCell => {
-                if (linkId.id == graphCell.id && newNeeded) {
-                    if (from == graphCell.source().id && to == graphCell.target().id) {
-                        if (graphCell.attributes.labels[0].attrs.text.text.includes(lbl)) {
+            graphAnswer.getElements().forEach(graphElement => {
+                if (linkId.id == graphElement.id && newNeeded) {
+                    if (from == graphElement.source().id && to == graphElement.target().id) {
+                        if (graphElement.attributes.labels[0].attrs.text.text.includes(lbl)) {
                             infoTextColor("Diese Transition existiert bereits.", "red");
                         } else {
-                            graphCell.attributes.labels[0].attrs.text.text = ("0, 1");
-                            graphCell.attr('text/text', '0, 1');
+                            graphElement.attributes.labels[0].attrs.text.text = ("0, 1");
+                            graphElement.attr('text/text', '0, 1');
                         }
                         newNeeded = false;
                     }
@@ -605,13 +605,13 @@ function drawQuestion(fsm) {
         var newNeeded = true;
         if (graphQuestion.getLinks().length > 0) {
             graphQuestion.getLinks().forEach(linkId => {
-                graphQuestion.getCells().forEach(graphCell => {
-                    if (newNeeded && linkId.id == graphCell.id) {
-                        if (transition.from == graphCell.source().id &&
-                            transition.to == graphCell.target().id) {
-                            if (!graphCell.attributes.labels[0].attrs.text.text.includes(transition.sign)) {
-                                graphCell.attributes.labels[0].attrs.text.text = ("0 , 1");
-                                graphCell.attr('text/text', '0, 1');
+                graphQuestion.getElements().forEach(graphElement => {
+                    if (newNeeded && linkId.id == graphElement.id) {
+                        if (transition.from == graphElement.source().id &&
+                            transition.to == graphElement.target().id) {
+                            if (!graphElement.attributes.labels[0].attrs.text.text.includes(transition.sign)) {
+                                graphElement.attributes.labels[0].attrs.text.text = ("0 , 1");
+                                graphElement.attr('text/text', '0, 1');
                             }
                             newNeeded = false;
                         }
