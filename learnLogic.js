@@ -488,7 +488,7 @@ function loadQuestion(id) {
                         start: "q0",
                         states: ["q0", "q1", "q2"],
                         ends: ["q1", "q2"],
-                        trans: [{
+                        transitions: [{
                             from: "q0",
                             sign: "0",
                             to: "q1"
@@ -518,7 +518,7 @@ function loadQuestion(id) {
                         start: "q0",
                         states: ["q0", "q1"],
                         ends: ["q1"],
-                        trans: [{
+                        transitions: [{
                             from: "q0",
                             sign: "0",
                             to: "q1"
@@ -546,11 +546,11 @@ function loadQuestion(id) {
     document.getElementById("questionText").innerHTML = packedQuestion.questionText;
     questionFSM = new FSM(packedQuestion.questionFSM.start,
         packedQuestion.questionFSM.states,
-        packedQuestion.questionFSM.trans,
+        packedQuestion.questionFSM.transitions,
         packedQuestion.questionFSM.ends);
     solutionFSM = new FSM(packedQuestion.solutionFSM.start,
         packedQuestion.solutionFSM.states,
-        packedQuestion.solutionFSM.trans,
+        packedQuestion.solutionFSM.transitions,
         packedQuestion.solutionFSM.ends);
 
     drawQuestion(questionFSM);
@@ -601,7 +601,7 @@ function drawQuestion(fsm) {
 
     questionLink(startQuestion, graphQuestion.getCell(fsm.start));
 
-    fsm.trans.forEach(transition => {
+    fsm.transitions.forEach(transition => {
         var newNeeded = true;
         if (graphQuestion.getLinks().length > 0) {
             graphQuestion.getLinks().forEach(linkId => {
@@ -653,7 +653,7 @@ function check() {
  * This casts the given answer to a new FSM.
  */
 function answerToFSM() {
-    var trans = new Array();
+    var newTransitions = new Array();
     var startName;
     var ends = new Array();
 
@@ -661,7 +661,7 @@ function answerToFSM() {
         graphAnswer.getLinks().forEach(link => {
             if (link != startLink) {
                 link.label().attrs.text.text.split(', ').forEach(splitLabel => {
-                    trans.push({
+                    newTransitions.push({
                         from: link.source().id,
                         sign: splitLabel,
                         to: link.target().id
@@ -677,7 +677,7 @@ function answerToFSM() {
         ends.push(fState.id);
     });
 
-    return new FSM(startName, Array.from(states), trans, ends);
+    return new FSM(startName, Array.from(states), newTransitions, ends);
 }
 
 /**
@@ -771,4 +771,12 @@ function getHalfcircleVertex(source, target) {
         x: vx,
         y: vy
     };
+}
+
+function hintTop(){
+    console.log(String.fromCharCode(949));
+}
+
+function hintBottom(){
+    console.log(0b11.toString(2));
 }

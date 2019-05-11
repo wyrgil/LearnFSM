@@ -8,12 +8,12 @@ class FSM {
         if (arguments.length != 4) {
             this.start = null;
             this.states = new Array();
-            this.trans = new Array();
+            this.transitions = new Array();
             this.ends = new Array();
         } else {
             this.start = arguments[0];
             this.states = arguments[1];
-            this.trans = arguments[2];
+            this.transitions = arguments[2];
             this.ends = arguments[3];
         }
     }
@@ -26,8 +26,8 @@ class FSM {
         this.states.add(state);
     }
 
-    addTrans(trans) {
-        this.trans.add(trans);
+    addTransition(transition) {
+        this.transitions.add(transition);
     }
 
     addEnd(end) {
@@ -36,7 +36,7 @@ class FSM {
 
     getNextState(state, sign) {
         var ret = null;
-        this.trans.forEach(t => {
+        this.transitions.forEach(t => {
             if (t.from == state && t.sign == sign) {
                 ret = t.to;
             }
@@ -109,22 +109,45 @@ class FSM {
         }
 
         if (this.states.length != fsm.states.length) {
-            return "Da fehlen noch Zustände.";
+            return "Es fehlen noch Zustände.";
         }
 
         if (this.ends.length != fsm.ends.length) {
-            return "Da fehlen noch akzeptierende Zustände.";
+            return "Es fehlen noch akzeptierende Zustände.";
         }
 
-        if (this.trans.length != fsm.trans.length) {
-            return "Da fehlen noch Transitionen.";
+        if (this.transitions.length != fsm.transitions.length) {
+            return "Es fehlen noch Transitionen.";
         }
 
         return equalLight(fsm);
     }
 
     compute(signs) {
-        //TODO: accept or not accept?
+        let currentState = this.start;
+
+        for (let i = 0; i < signs.length; i++) {
+            let sign = signs[i];
+            let nextState = null;
+            
+            this.transitions.forEach(t => {
+                if (t.from == currentState && t.sign == sign) {
+                    nextState = t.to;
+                }
+            });
+            if(!nextState){
+                currentState = null;
+                break;
+            }
+            currentState = nextState;
+        }
+        return this.ends.includes(currentState);
+    }
+
+    getHints(count){
+        let acceptedStrings = new Array();
+
+        
     }
 
 }
