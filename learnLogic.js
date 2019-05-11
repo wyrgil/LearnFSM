@@ -781,6 +781,9 @@ function getHalfcircleVertex(source, target) {
     };
 }
 
+/**
+ * Generates an alert with accepted char sequences of the question FSM.
+ */
 function hintTop(){
     let count = Math.floor(topHints * Math.pow(2, hintCountTop));
 
@@ -800,6 +803,9 @@ function hintTop(){
     alert(hintStringsFormatted);
 }
 
+/**
+ * Generates an alert with accepted char sequences of the answer FSM.
+ */
 function hintBottom(){
     let count = Math.floor(bottomHints * Math.pow(2, hintCountBottom));
 
