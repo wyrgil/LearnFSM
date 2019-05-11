@@ -175,10 +175,18 @@ class FSM {
         }
         visitedStrings.push("");
 
-        return this.getHintsRecursive(acceptedStrings, visitedStrings, count);
+        return this.__getHintsRecursive(acceptedStrings, visitedStrings, count);
     }
 
-    getHintsRecursive(acceptedStrings, visitedStrings, count) {
+    /**
+     * Recursive function to decide if the next char sequence should be added to
+     * acceptedStrings.
+     * 
+     * @param {String[]} acceptedStrings : Already accepted strings.
+     * @param {String[]} visitedStrings : Already visited strings.
+     * @param {Number} count : Number of hints to give.
+     */
+    __getHintsRecursive(acceptedStrings, visitedStrings, count) {
         if (acceptedStrings.length >= count || visitedStrings.length >= 1024) {
             return acceptedStrings;
         }
@@ -198,7 +206,7 @@ class FSM {
             }
         }
         visitedStrings = visitedStrings.concat(newVisitedStrings);
-        return this.getHintsRecursive(acceptedStrings, visitedStrings, count);
+        return this.__getHintsRecursive(acceptedStrings, visitedStrings, count);
     }
 
 }
