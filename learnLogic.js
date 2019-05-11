@@ -484,6 +484,7 @@ function finishButtonText() {
  * @param {Number} id : Question id (for database).
  */
 function loadQuestion(id) {
+
     var packedQuestion;
     if (id != null) {
         //TODO: load question from db.
@@ -784,7 +785,7 @@ function getHalfcircleVertex(source, target) {
 /**
  * Generates an alert with accepted char sequences of the question FSM.
  */
-function hintTop(){
+function hintTop() {
     let count = Math.floor(topHints * Math.pow(2, hintCountTop));
 
     let hintStrings = solutionFSM.getHints(count);
@@ -792,10 +793,10 @@ function hintTop(){
     let hintStringsFormatted = "Anzahl der Hinweise: " + count + "\n";
     hintStringsFormatted += "\nDer Automat aus der Aufgabenstellung akzeptiert folgende Zeichenketten:\n";
 
-    if(hintStrings.length > 0){
+    if (hintStrings.length > 0) {
         hintStringsFormatted += "\"" + hintStrings[0] + "\"";
 
-        for(let i = 1; i < hintStrings.length; i++){
+        for (let i = 1; i < hintStrings.length; i++) {
             hintStringsFormatted += ", \"" + hintStrings[i] + "\"";
         }
     }
@@ -806,7 +807,7 @@ function hintTop(){
 /**
  * Generates an alert with accepted char sequences of the answer FSM.
  */
-function hintBottom(){
+function hintBottom() {
     let count = Math.floor(bottomHints * Math.pow(2, hintCountBottom));
 
     let fsm = answerToFSM();
@@ -816,10 +817,10 @@ function hintBottom(){
     let hintStringsFormatted = "Anzahl der Hinweise: " + count + "\n";
     hintStringsFormatted += "\nIhr Antwortautomat akzeptiert folgende Zeichenketten:\n";
 
-    if(hintStrings.length > 0){
+    if (hintStrings.length > 0) {
         hintStringsFormatted += "\"" + hintStrings[0] + "\"";
 
-        for(let i = 1; i < hintStrings.length; i++){
+        for (let i = 1; i < hintStrings.length; i++) {
             hintStringsFormatted += ", \"" + hintStrings[i] + "\"";
         }
     }
