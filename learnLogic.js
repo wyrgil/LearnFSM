@@ -48,6 +48,11 @@ var selectedStateQuestion;
 
 var pushToBottomSetFlag = false;
 
+var topHints = 2.5;
+var bottomHints = 2.5;
+var hintCountTop;
+var hintCountBottom;
+
 /**
  * This is used to highlight corresponding states in the other paper.
  */
@@ -179,6 +184,9 @@ function onLoad() {
             }
         })
     });
+
+    hintCountTop = 0;
+    hintCountBottom = 0;
 }
 
 /**
@@ -488,7 +496,7 @@ function loadQuestion(id) {
                         start: "q0",
                         states: ["q0", "q1", "q2"],
                         ends: ["q1", "q2"],
-                        trans: [{
+                        transitions: [{
                             from: "q0",
                             sign: "0",
                             to: "q1"
@@ -518,7 +526,7 @@ function loadQuestion(id) {
                         start: "q0",
                         states: ["q0", "q1"],
                         ends: ["q1"],
-                        trans: [{
+                        transitions: [{
                             from: "q0",
                             sign: "0",
                             to: "q1"
@@ -546,11 +554,11 @@ function loadQuestion(id) {
     document.getElementById("questionText").innerHTML = packedQuestion.questionText;
     questionFSM = new FSM(packedQuestion.questionFSM.start,
         packedQuestion.questionFSM.states,
-        packedQuestion.questionFSM.trans,
+        packedQuestion.questionFSM.transitions,
         packedQuestion.questionFSM.ends);
     solutionFSM = new FSM(packedQuestion.solutionFSM.start,
         packedQuestion.solutionFSM.states,
-        packedQuestion.solutionFSM.trans,
+        packedQuestion.solutionFSM.transitions,
         packedQuestion.solutionFSM.ends);
 
     drawQuestion(questionFSM);
@@ -601,7 +609,7 @@ function drawQuestion(fsm) {
 
     questionLink(startQuestion, graphQuestion.getCell(fsm.start));
 
-    fsm.trans.forEach(transition => {
+    fsm.transitions.forEach(transition => {
         var newNeeded = true;
         if (graphQuestion.getLinks().length > 0) {
             graphQuestion.getLinks().forEach(linkId => {
@@ -653,7 +661,7 @@ function check() {
  * This casts the given answer to a new FSM.
  */
 function answerToFSM() {
-    var trans = new Array();
+    var newTransitions = new Array();
     var startName;
     var ends = new Array();
 
@@ -661,7 +669,7 @@ function answerToFSM() {
         graphAnswer.getLinks().forEach(link => {
             if (link != startLink) {
                 link.label().attrs.text.text.split(', ').forEach(splitLabel => {
-                    trans.push({
+                    newTransitions.push({
                         from: link.source().id,
                         sign: splitLabel,
                         to: link.target().id
@@ -677,7 +685,7 @@ function answerToFSM() {
         ends.push(fState.id);
     });
 
-    return new FSM(startName, Array.from(states), trans, ends);
+    return new FSM(startName, Array.from(states), newTransitions, ends);
 }
 
 /**
@@ -771,4 +779,50 @@ function getHalfcircleVertex(source, target) {
         x: vx,
         y: vy
     };
+}
+
+/**
+ * Generates an alert with accepted char sequences of the question FSM.
+ */
+function hintTop(){
+    let count = Math.floor(topHints * Math.pow(2, hintCountTop));
+
+    let hintStrings = solutionFSM.getHints(count);
+
+    let hintStringsFormatted = "Anzahl der Hinweise: " + count + "\n";
+    hintStringsFormatted += "\nDer Automat aus der Aufgabenstellung akzeptiert folgende Zeichenketten:\n";
+
+    if(hintStrings.length > 0){
+        hintStringsFormatted += "\"" + hintStrings[0] + "\"";
+
+        for(let i = 1; i < hintStrings.length; i++){
+            hintStringsFormatted += ", \"" + hintStrings[i] + "\"";
+        }
+    }
+    hintCountTop += (hintCountTop < 4) ? 1 : 0;
+    alert(hintStringsFormatted);
+}
+
+/**
+ * Generates an alert with accepted char sequences of the answer FSM.
+ */
+function hintBottom(){
+    let count = Math.floor(bottomHints * Math.pow(2, hintCountBottom));
+
+    let fsm = answerToFSM();
+
+    let hintStrings = fsm.getHints(count);
+
+    let hintStringsFormatted = "Anzahl der Hinweise: " + count + "\n";
+    hintStringsFormatted += "\nIhr Antwortautomat akzeptiert folgende Zeichenketten:\n";
+
+    if(hintStrings.length > 0){
+        hintStringsFormatted += "\"" + hintStrings[0] + "\"";
+
+        for(let i = 1; i < hintStrings.length; i++){
+            hintStringsFormatted += ", \"" + hintStrings[i] + "\"";
+        }
+    }
+    hintCountBottom += (hintCountBottom < 4) ? 1 : 0;
+    alert(hintStringsFormatted);
 }

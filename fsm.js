@@ -8,12 +8,12 @@ class FSM {
         if (arguments.length != 4) {
             this.start = null;
             this.states = new Array();
-            this.trans = new Array();
+            this.transitions = new Array();
             this.ends = new Array();
         } else {
             this.start = arguments[0];
             this.states = arguments[1];
-            this.trans = arguments[2];
+            this.transitions = arguments[2];
             this.ends = arguments[3];
         }
     }
@@ -26,8 +26,8 @@ class FSM {
         this.states.add(state);
     }
 
-    addTrans(trans) {
-        this.trans.add(trans);
+    addTransition(transition) {
+        this.transitions.add(transition);
     }
 
     addEnd(end) {
@@ -36,7 +36,7 @@ class FSM {
 
     getNextState(state, sign) {
         var ret = null;
-        this.trans.forEach(t => {
+        this.transitions.forEach(t => {
             if (t.from == state && t.sign == sign) {
                 ret = t.to;
             }
@@ -104,27 +104,117 @@ class FSM {
     equal(fsm) {
         var result = 0;
 
-        if ((this.states.length > 0 && !this.start) || (fsm.states.length > 0 && !fsm.start)) {
+        if (this.states.length > 0 && !this.start) {
             return "Es wurde noch kein Startzustand deklariert."
         }
 
-        if (this.states.length != fsm.states.length) {
-            return "Da fehlen noch Zustände.";
+        if (this.states.length < fsm.states.length) {
+            return "Es fehlen noch Zustände.";
+        }else if (this.states.length > fsm.states.length) {
+            return "Der Automat hat zu viele Zustände.";
         }
 
-        if (this.ends.length != fsm.ends.length) {
-            return "Da fehlen noch akzeptierende Zustände.";
+        if (this.ends.length < fsm.ends.length) {
+            return "Es fehlen noch akzeptierende Zustände.";
+        }else if(this.ends.length > fsm.ends.length){
+            return "Der Automat hat zu viele akzeptierende Zustände.";
         }
 
-        if (this.trans.length != fsm.trans.length) {
-            return "Da fehlen noch Transitionen.";
-        }
+        if (this.transitions.length < fsm.transitions.length
+            || this.transitions.length < this.states.length * 2) {
+            return "Es fehlen noch Transitionen.";
+        }else if(this.transitions.length > fsm.transitions.length
+            || this.transitions.length > this.states.length * 2){
+                return "Der Automat hat zu viele Transitionen";
+            }
 
         return equalLight(fsm);
     }
 
+    /**
+     * Computes if the FSM accepts the given char sequence or not.
+     * 
+     * @param {String} signs : Char sequence to compute.
+     * 
+     * @returns {Boolean} Accept or not.
+     */
     compute(signs) {
-        //TODO: accept or not accept?
+        let currentState = this.start;
+
+        for (let i = 0; i < signs.length; i++) {
+            let sign = signs[i];
+            let nextState = null;
+
+            this.transitions.forEach(t => {
+                if (t.from == currentState && t.sign == sign) {
+                    nextState = t.to;
+                }
+            });
+            if (!nextState) {
+                currentState = null;
+                break;
+            }
+            currentState = nextState;
+        }
+        return this.ends.includes(currentState);
+    }
+
+    /**
+     * Evaluates the first <count> accepted char sequences for this FSM. 
+     * 
+     * @param {Number} count : Number of hints to give.
+     * 
+     * @returns {String[]} String array of accepted char sequences.
+     */
+    getHints(count) {
+        let acceptedStrings = new Array();
+        let visitedStrings = new Array();
+
+        if (this.ends.length <= 0) {
+            //add empty set
+            acceptedStrings.push(String.fromCharCode(8709));
+
+            return acceptedStrings;
+        }
+
+        if (this.ends.includes(this.start)) {
+            //add empty word
+            acceptedStrings.push(String.fromCharCode(949));
+        }
+        visitedStrings.push("");
+
+        return this.__getHintsRecursive(acceptedStrings, visitedStrings, count);
+    }
+
+    /**
+     * Recursive function to decide if the next char sequence should be added to
+     * acceptedStrings.
+     * 
+     * @param {String[]} acceptedStrings : Already accepted strings.
+     * @param {String[]} visitedStrings : Already visited strings.
+     * @param {Number} count : Number of hints to give.
+     */
+    __getHintsRecursive(acceptedStrings, visitedStrings, count) {
+        if (acceptedStrings.length >= count || visitedStrings.length >= 1024) {
+            return acceptedStrings;
+        }
+        let newVisitedStrings = new Array();
+        for (let i = Math.ceil(visitedStrings.length / 2 - 1); i < visitedStrings.length; i++) {
+            let currentVisitedStringAddSign = new Array();
+            currentVisitedStringAddSign.push(visitedStrings[i] + "0");
+            currentVisitedStringAddSign.push(visitedStrings[i] + "1");
+            for (let j = 0; j < currentVisitedStringAddSign.length; j++) {
+                if (this.compute(currentVisitedStringAddSign[j])) {
+                    acceptedStrings.push(currentVisitedStringAddSign[j]);
+                }
+                newVisitedStrings.push(currentVisitedStringAddSign[j]);
+                if (acceptedStrings.length >= count) {
+                    return acceptedStrings;
+                }
+            }
+        }
+        visitedStrings = visitedStrings.concat(newVisitedStrings);
+        return this.__getHintsRecursive(acceptedStrings, visitedStrings, count);
     }
 
 }
