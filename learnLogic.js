@@ -48,6 +48,11 @@ var selectedStateQuestion;
 
 var pushToBottomSetFlag = false;
 
+var topHints = 2.5;
+var bottomHints = 2.5;
+var hintCountTop;
+var hintCountBottom;
+
 /**
  * This is used to highlight corresponding states in the other paper.
  */
@@ -179,6 +184,9 @@ function onLoad() {
             }
         })
     });
+
+    hintCountTop = 0;
+    hintCountBottom = 0;
 }
 
 /**
@@ -774,10 +782,41 @@ function getHalfcircleVertex(source, target) {
 }
 
 function hintTop(){
-    console.log(String.fromCharCode(949));
+    let count = Math.floor(topHints * Math.pow(2, hintCountTop));
+
+    let hintStrings = solutionFSM.getHints(count);
+
+    let hintStringsFormatted = "Anzahl der Hinweise: " + count + "\n";
+    hintStringsFormatted += "\nDer Automat aus der Aufgabenstellung akzeptiert folgende Zeichenketten:\n";
+
+    if(hintStrings.length > 0){
+        hintStringsFormatted += "\"" + hintStrings[0] + "\"";
+
+        for(let i = 1; i < hintStrings.length; i++){
+            hintStringsFormatted += ", \"" + hintStrings[i] + "\"";
+        }
+    }
+    hintCountTop += (hintCountTop < 4) ? 1 : 0;
+    alert(hintStringsFormatted);
 }
 
 function hintBottom(){
-    console.log(0b11.toString(2));
-    console.log(String.fromCharCode(8709));
+    let count = Math.floor(bottomHints * Math.pow(2, hintCountBottom));
+
+    let fsm = answerToFSM();
+
+    let hintStrings = fsm.getHints(count);
+
+    let hintStringsFormatted = "Anzahl der Hinweise: " + count + "\n";
+    hintStringsFormatted += "\nIhr Antwortautomat akzeptiert folgende Zeichenketten:\n";
+
+    if(hintStrings.length > 0){
+        hintStringsFormatted += "\"" + hintStrings[0] + "\"";
+
+        for(let i = 1; i < hintStrings.length; i++){
+            hintStringsFormatted += ", \"" + hintStrings[i] + "\"";
+        }
+    }
+    hintCountBottom += (hintCountBottom < 4) ? 1 : 0;
+    alert(hintStringsFormatted);
 }

@@ -104,21 +104,29 @@ class FSM {
     equal(fsm) {
         var result = 0;
 
-        if ((this.states.length > 0 && !this.start) || (fsm.states.length > 0 && !fsm.start)) {
+        if (this.states.length > 0 && !this.start) {
             return "Es wurde noch kein Startzustand deklariert."
         }
 
-        if (this.states.length != fsm.states.length) {
+        if (this.states.length < fsm.states.length) {
             return "Es fehlen noch Zustände.";
+        }else if (this.states.length > fsm.states.length) {
+            return "Der Automat hat zu viele Zustände.";
         }
 
-        if (this.ends.length != fsm.ends.length) {
+        if (this.ends.length < fsm.ends.length) {
             return "Es fehlen noch akzeptierende Zustände.";
+        }else if(this.ends.length > fsm.ends.length){
+            return "Der Automat hat zu viele akzeptierende Zustände.";
         }
 
-        if (this.transitions.length != fsm.transitions.length) {
+        if (this.transitions.length < fsm.transitions.length
+            || this.transitions.length < this.states.length * 2) {
             return "Es fehlen noch Transitionen.";
-        }
+        }else if(this.transitions.length > fsm.transitions.length
+            || this.transitions.length > this.states.length * 2){
+                return "Der Automat hat zu viele Transitionen";
+            }
 
         return equalLight(fsm);
     }
