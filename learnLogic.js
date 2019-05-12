@@ -484,6 +484,7 @@ function finishButtonText() {
  * @param {Number} id : Question id (for database).
  */
 function loadQuestion(id) {
+
     var packedQuestion;
     if (id != null) {
         //TODO: load question from db.
@@ -784,45 +785,52 @@ function getHalfcircleVertex(source, target) {
 /**
  * Generates an alert with accepted char sequences of the question FSM.
  */
-function hintTop(){
-    let count = Math.floor(topHints * Math.pow(2, hintCountTop));
-
-    let hintStrings = solutionFSM.getHints(count);
-
-    let hintStringsFormatted = "Anzahl der Hinweise: " + count + "\n";
-    hintStringsFormatted += "\nDer Automat aus der Aufgabenstellung akzeptiert folgende Zeichenketten:\n";
-
-    if(hintStrings.length > 0){
-        hintStringsFormatted += "\"" + hintStrings[0] + "\"";
-
-        for(let i = 1; i < hintStrings.length; i++){
-            hintStringsFormatted += ", \"" + hintStrings[i] + "\"";
-        }
-    }
-    hintCountTop += (hintCountTop < 4) ? 1 : 0;
-    alert(hintStringsFormatted);
+function hintTop() {
+    hint(false);
 }
 
 /**
  * Generates an alert with accepted char sequences of the answer FSM.
  */
-function hintBottom(){
-    let count = Math.floor(bottomHints * Math.pow(2, hintCountBottom));
+function hintBottom() {
+    hint(true);
+}
 
-    let fsm = answerToFSM();
+/**
+ * Generates an alert with accepted char sequences of the selected FSM. 
+ * 
+ * @param {Boolean} answer : true = answer; false = question.
+ */
+function hint(answer){
+    let hints = (answer) ? bottomHints : topHints;
+
+    let hintCount = (answer) ? hintCountBottom : hintCountTop;
+
+    let count = Math.floor(hints * Math.pow(2, hintCount));
+
+    let fsm = (answer) ? answerToFSM() : solutionFSM;
 
     let hintStrings = fsm.getHints(count);
 
-    let hintStringsFormatted = "Anzahl der Hinweise: " + count + "\n";
-    hintStringsFormatted += "\nIhr Antwortautomat akzeptiert folgende Zeichenketten:\n";
+    let hintStringsFormatted = "Anzahl der Hinweise: " + count + "\n\n";
 
-    if(hintStrings.length > 0){
+    hintStringsFormatted += (answer) ? "Ihr Antwortautomat akzeptiert" : "Der Automat aus der Aufgabenstellung";
+
+    hintStringsFormatted += " folgende Zeichenketten:\n";
+
+    if (hintStrings.length > 0) {
         hintStringsFormatted += "\"" + hintStrings[0] + "\"";
 
-        for(let i = 1; i < hintStrings.length; i++){
+        for (let i = 1; i < hintStrings.length; i++) {
             hintStringsFormatted += ", \"" + hintStrings[i] + "\"";
         }
     }
-    hintCountBottom += (hintCountBottom < 4) ? 1 : 0;
+
+    if(answer){
+        hintCountBottom += (hintCountBottom < 4) ? 1 : 0;
+    }else{
+        hintCountTop += (hintCountTop < 4) ? 1 : 0;
+    }
+
     alert(hintStringsFormatted);
 }
