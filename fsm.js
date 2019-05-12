@@ -49,24 +49,24 @@ class FSM {
      * @param {FSM} fsm : FSM to compare
      */
     equalLight(fsm) {
-        var result = 0;
-        var mapper = new Map();
+        let result = 0;
+        let mapper = new Map();
         mapper.set(this.start, fsm.start);
 
-        var transitions = new Array();
+        let transitions = new Array();
 
         transitions.push([this.start, fsm.start]);
 
-        var i = 0;
+        let i = 0;
         do {
             ["0", "1"].forEach(s => {
-                var qt = this.getNextState(transitions[i][0], s);
-                var qf = fsm.getNextState(transitions[i][1], s);
+                let qt = this.getNextState(transitions[i][0], s);
+                let qf = fsm.getNextState(transitions[i][1], s);
                 if (this.ends.includes(qt) != fsm.ends.includes(qf)) {
                     result = "Es gibt noch falsche Transitionen.";
                 }
                 mapper.set(qt, qf);
-                var add = true;
+                let add = true;
                 transitions.forEach(t => {
                     if (arrayCompare(t, [qt, qf])) {
                         add = false;
@@ -80,10 +80,10 @@ class FSM {
             i++;
         } while (i < mapper.size);
 
-        var fins = new Array();
+        let fins = new Array();
 
         this.ends.forEach(end => {
-            fins.push(mapper.get(end));
+            fins.push(mapper.get(this.ends[end]));
         });
 
         if (result == 0 && arrayCompare(fins, fsm.ends)) {
@@ -138,7 +138,7 @@ class FSM {
      * @returns {Boolean} Accept or not.
      */
     compute(signs) {
-        let currentState = this.start;
+        let currentState = this.states[this.start];
 
         for (let i = 0; i < signs.length; i++) {
             let sign = signs[i];
@@ -155,7 +155,7 @@ class FSM {
             }
             currentState = nextState;
         }
-        return this.ends.includes(currentState);
+        return this.ends.includes(this.states.indexOf(currentState));
     }
 
     /**
