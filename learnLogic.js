@@ -433,7 +433,7 @@ function setTransition(node, lbl) {
     var newNeeded = true;
     if (graphAnswer.getLinks().length > 0) {
         graphAnswer.getLinks().forEach(linkId => {
-            graphAnswer.getElements().forEach(graphElement => {
+            graphAnswer.getLinks().forEach(graphElement => {
                 if (linkId.id == graphElement.id && newNeeded) {
                     if (from == graphElement.source().id && to == graphElement.target().id) {
                         if (graphElement.attributes.labels[0].attrs.text.text.includes(lbl)) {
@@ -494,9 +494,9 @@ function loadQuestion(id) {
                 packedQuestion = {
                     questionText: "Minimieren Sie diesen Automaten.",
                     questionFSM: {
-                        start: "q0",
+                        start: 0,
                         states: ["q0", "q1", "q2"],
-                        ends: ["q1", "q2"],
+                        ends: [1, 2],
                         transitions: [{
                             from: "q0",
                             sign: "0",
@@ -524,9 +524,9 @@ function loadQuestion(id) {
                         }]
                     },
                     solutionFSM: {
-                        start: "q0",
+                        start: 0,
                         states: ["q0", "q1"],
-                        ends: ["q1"],
+                        ends: [1],
                         transitions: [{
                             from: "q0",
                             sign: "0",
@@ -571,7 +571,7 @@ function loadQuestion(id) {
  * @param {FSM} fsm : The FSM to draw.
  */
 function drawQuestion(fsm) {
-    var startQuestion = new joint.shapes.fsa.StartState({
+    let startQuestion = new joint.shapes.fsa.StartState({
         position: {
             x: 10,
             y: 10
@@ -579,11 +579,11 @@ function drawQuestion(fsm) {
     });
     graphQuestion.addCell(startQuestion);
 
-    var xqPos = 0;
-    var yqPos = 0;
+    let xqPos = 0;
+    let yqPos = 0;
 
     fsm.states.forEach(state => {
-        var cell = new joint.shapes.fsa.State({
+        let cell = new joint.shapes.fsa.State({
             id: state,
             position: {
                 x: xqPos + offsetX / 2,
@@ -608,13 +608,13 @@ function drawQuestion(fsm) {
         }
     });
 
-    questionLink(startQuestion, graphQuestion.getCell(fsm.start));
+    questionLink(startQuestion, graphQuestion.getCell(fsm.states[fsm.start]));
 
     fsm.transitions.forEach(transition => {
-        var newNeeded = true;
+        let newNeeded = true;
         if (graphQuestion.getLinks().length > 0) {
             graphQuestion.getLinks().forEach(linkId => {
-                graphQuestion.getElements().forEach(graphElement => {
+                graphQuestion.getLinks().forEach(graphElement => {
                     if (newNeeded && linkId.id == graphElement.id) {
                         if (transition.from == graphElement.source().id &&
                             transition.to == graphElement.target().id) {
@@ -636,7 +636,7 @@ function drawQuestion(fsm) {
     });
 
     fsm.ends.forEach(end => {
-        graphQuestion.getCell(end).attr('circle/fill', 'yellow');
+        graphQuestion.getCell(fsm.states[end]).attr('circle/fill', 'yellow');
     })
 }
 
@@ -662,9 +662,10 @@ function check() {
  * This casts the given answer to a new FSM.
  */
 function answerToFSM() {
-    var newTransitions = new Array();
-    var startName;
-    var ends = new Array();
+    let newTransitions = new Array();
+    let newStates = Array.from(states);
+    let newStartState;
+    let ends = new Array();
 
     if (graphAnswer.getLinks().length > 0) {
         graphAnswer.getLinks().forEach(link => {
@@ -680,13 +681,13 @@ function answerToFSM() {
         });
     }
 
-    startName = (startState != null) ? startState.id : null;
+    newStartState = (startState != null) ? newStates.indexOf(startState.id) : null;
 
     finishStates.forEach(fState => {
-        ends.push(fState.id);
+        ends.push(newStates.indexOf(fState.id));
     });
 
-    return new FSM(startName, Array.from(states), newTransitions, ends);
+    return new FSM(newStartState, newStates, newTransitions, ends);
 }
 
 /**
