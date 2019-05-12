@@ -170,14 +170,14 @@ class FSM {
         let visitedStrings = new Array();
 
         if (this.ends.length <= 0) {
-            //add empty set
+            //add empty set "Ø"
             acceptedStrings.push(String.fromCharCode(8709));
 
             return acceptedStrings;
         }
 
         if (this.ends.includes(this.start)) {
-            //add empty word
+            //add empty word "ε"
             acceptedStrings.push(String.fromCharCode(949));
         }
         visitedStrings.push("");
