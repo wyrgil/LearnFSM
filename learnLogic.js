@@ -383,6 +383,9 @@ function deleteState() {
         graphAnswer.removeCells(selectedState);
         states.delete(selectedState.id);
         nodes.delete(selectedState);
+        if(finishStates.has(selectedState)){
+            finishStates.delete(selectedState);
+        }
         selectedState = null;
     }
 }
