@@ -61,11 +61,11 @@ var customHighlighter = {
         name: 'stroke',
         options: {
             padding: 10,
-            rx: 5,
-            ry: 5,
+            rx: -5,
+            ry: -5,
             attrs: {
                 'stroke-width': 3,
-                stroke: '#00FF00'
+                stroke: '#00FF0077'
             }
         }
     }
