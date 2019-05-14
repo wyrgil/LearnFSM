@@ -999,8 +999,10 @@ function highlightTransititons(graph, node) {
     }
 
     if (linkSource != start) {
-        g2.getLinks().forEach(link => {
-            if (link.source().id == linkSource.id) {
+        let sourceArray = linkSource.attributes.attrs.text.text.split(', ');
+        sourceArray.forEach(lbl => {
+            g2.getLinks().forEach(link => {
+            if (link.source().id == lbl) {
                 switch (link.label().attrs.text.text) {
                     case "0":
                         link.attr('line/stroke', 'red');
@@ -1014,6 +1016,8 @@ function highlightTransititons(graph, node) {
                 }
             }
         });
+        });
+        
     }
 }
 
