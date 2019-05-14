@@ -66,32 +66,36 @@ class FSM {
      * 
      * @param {FSM} fsm : FSM to compare
      */
-    equivalence(fsm) {
+    equvalence(fsm) {
         let result = 0;
         let mapper = new Map();
-        mapper.set(this.start, fsm.start);
+        mapper.set(this.states[this.start], fsm.states[fsm.start]);
 
         let transitions = new Array();
 
-        transitions.push([this.start, fsm.start]);
+        transitions.push([this.states[this.start], fsm.states[fsm.start]]);
 
         let i = 0;
         do {
             ["0", "1"].forEach(s => {
                 let qt = this.getNextState(transitions[i][0], s);
                 let qf = fsm.getNextState(transitions[i][1], s);
-                if (this.ends.includes(qt) != fsm.ends.includes(qf)) {
-                    result = "Es gibt noch falsche Transitionen.";
-                }
-                mapper.set(qt, qf);
-                let add = true;
-                transitions.forEach(t => {
-                    if (arrayCompare(t, [qt, qf])) {
-                        add = false;
+                if (qt && qf) {
+                    if (this.ends.includes(this.states.indexOf(qt)) != fsm.ends.includes(fsm.states.indexOf(qf))) {
+                        result = "Es gibt noch falsche Transitionen.";
                     }
-                });
-                if (add) {
-                    transitions.push([qt, qf]);
+                    mapper.set(qt, qf);
+                    let add = true;
+                    transitions.forEach(t => {
+                        if (arrayCompare(t, [qt, qf])) {
+                            add = false;
+                        }
+                    });
+                    if (add) {
+                        transitions.push([qt, qf]);
+                    }
+                }else{
+                    result = "Es fehlen noch Zustände";
                 }
             });
 
@@ -101,7 +105,12 @@ class FSM {
         let fins = new Array();
 
         this.ends.forEach(end => {
-            fins.push(mapper.get(this.ends[end]));
+            fins.push(mapper.get(this.states[end]));
+        });
+
+        let finsToCompare = new Array();
+        fsm.ends.forEach(end => {
+            finsToCompare.push(fsm.states[end]);
         });
 
         if (result == 0 && arrayCompare(fins, fsm.ends)) {
@@ -127,25 +136,36 @@ class FSM {
 
         if (this.states.length < fsm.states.length) {
             return "Es fehlen noch Zustände.";
-        } else if (this.states.length > fsm.states.length) {
-            return "Der Automat hat zu viele Zustände.";
-        }
-
-        if (this.ends.length < fsm.ends.length) {
-            return "Es fehlen noch akzeptierende Zustände.";
-        } else if (this.ends.length > fsm.ends.length) {
-            return "Der Automat hat zu viele akzeptierende Zustände.";
         }
 
         if (this.transitions.length < fsm.transitions.length ||
             this.transitions.length < this.states.length * 2) {
             return "Es fehlen noch Transitionen.";
-        } else if (this.transitions.length > fsm.transitions.length ||
+        }
+
+        if (this.ends.length < fsm.ends.length) {
+            return "Es fehlen noch akzeptierende Zustände.";
+        }
+
+        let light = this.equvalence(fsm);
+        if(light != 0){
+            return light;
+        }
+
+        if (this.states.length > fsm.states.length) {
+            return "Der Automat hat zu viele Zustände.";
+        }
+        
+        if (this.transitions.length > fsm.transitions.length ||
             this.transitions.length > this.states.length * 2) {
             return "Der Automat hat zu viele Transitionen";
         }
+        
+        if (this.ends.length > fsm.ends.length) {
+            return "Der Automat hat zu viele akzeptierende Zustände.";
+        }
 
-        return this.equivalence(fsm);
+        return 0;
     }
 
     /**
@@ -244,6 +264,9 @@ class FSM {
  */
 function arrayCompare(arr1, arr2) {
     var result = false;
+    if(arr1.length != arr2.length){
+        return false;
+    }
     var i = 0;
     if (arr1 && arr2) {
         result = true;

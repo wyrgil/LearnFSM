@@ -752,9 +752,11 @@ function check() {
             onLoad();
         }
     } else {
-        if (document.getElementById("questionType").innerHTML != "minimize" && fsmToCheck.equalLight(solutionFSM) == 0) {
+        if (document.getElementById("questionType").innerHTML != "minimize" && fsmToCheck.equivalence(solutionFSM) == 0) {
             alert("Diese Antwort ist korrekt, jedoch noch nicht minimal.");
-            if (confirm("Für einen Minimalen Automaten gilt noch:\n" + equality + "\nAbrrechen, um es weiter zu versuchen, OK für die nächste Aufgabe."));
+            if (confirm("Für einen Minimalen Automaten gilt noch:\n" + equality + "\nAbrrechen, um es weiter zu versuchen, OK für die nächste Aufgabe.")){
+                onLoad();
+            }
         } else {
             alert(alertText);
         }
