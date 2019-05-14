@@ -48,7 +48,7 @@ class FSM {
      * 
      * @param {FSM} fsm : FSM to compare
      */
-    equalLight(fsm) {
+    equvalence(fsm) {
 
 
         let result = 0;
@@ -131,7 +131,7 @@ class FSM {
             return "Es fehlen noch akzeptierende Zustände.";
         }
 
-        let light = this.equalLight(fsm);
+        let light = this.equvalence(fsm);
         if(light != 0){
             return light;
         }
