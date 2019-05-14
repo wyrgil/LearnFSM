@@ -25,12 +25,30 @@ class FSM {
         this.states.add(state);
     }
 
+    removeState(state) {
+        if (this.states.includes(state)) {
+            this.states.pop(state);
+        }
+    }
+
     addTransition(transition) {
         this.transitions.add(transition);
     }
 
+    removeTransition(transition) {
+        if (this.transitions.includes(transition)) {
+            this.transitions.pop(transition);
+        }
+    }
+
     addEnd(end) {
         this.ends.add(end);
+    }
+
+    removeEnd(end) {
+        if (this.ends.includes(end)) {
+            this.ends.pop(end);
+        }
     }
 
     getNextState(state, sign) {
@@ -49,8 +67,6 @@ class FSM {
      * @param {FSM} fsm : FSM to compare
      */
     equivalence(fsm) {
-
-
         let result = 0;
         let mapper = new Map();
         mapper.set(this.states[this.start], fsm.states[fsm.start]);
