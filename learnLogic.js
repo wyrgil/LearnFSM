@@ -9,7 +9,7 @@ var offsetY = 80;
 var delta = 130;
 
 /**
- * These two variables are the cytoscape models for question and answer.
+ * These two variables are the jointJS models for question and answer.
  */
 var graphAnswer;
 var paperAnswer;
@@ -61,11 +61,11 @@ var customHighlighter = {
         name: 'stroke',
         options: {
             padding: 10,
-            rx: 5,
-            ry: 5,
+            rx: -5,
+            ry: -5,
             attrs: {
                 'stroke-width': 3,
-                stroke: '#00FF00'
+                stroke: '#00FF0077'
             }
         }
     }
@@ -90,7 +90,7 @@ function onLoad() {
     paperAnswer = new joint.dia.Paper({
         el: $('#paperAnswer'),
         width: '100%',
-        heigth: '60%',
+        heigth: '50%',
         gridSize: 1,
         model: graphAnswer
     });
@@ -134,6 +134,7 @@ function onLoad() {
         selectedState = node.model;
 
         finishButtonText();
+        deleteButtonText();
 
         unhighlightQuestion(customHighlighter);
 
@@ -149,6 +150,9 @@ function onLoad() {
                 }
             });
         }
+
+        highlightTransititons(graphAnswer, node);
+        highlightTransititons(graphQuestion, node);
     });
 
     /**
@@ -182,7 +186,22 @@ function onLoad() {
                     paperAnswer.findViewByModel(element).highlight(null, customHighlighter);
                 }
             }
-        })
+        });
+
+        highlightTransititons(graphQuestion, node);
+        highlightTransititons(graphAnswer, node);
+    });
+
+    graphAnswer.on('add remove change:source change:target', function () {
+        adjustAll(graphAnswer);
+
+        updateSelfLoops(graphAnswer);
+    });
+
+    paperAnswer.on('cell:pointerup', function () {
+        adjustAll(graphAnswer);
+
+        updateSelfLoops(graphAnswer);
     });
 
     hintCountTop = 0;
@@ -227,10 +246,7 @@ function state(x, y, label) {
  * @param {*} vertices 
  */
 function link(source, target, label, vertices) {
-    var vertex;
-    // vertex = getHalfcircleVertex(source, target);
-    // vertices = [vertex];
-    var cell = new joint.shapes.fsa.Arrow({
+    var cell = new joint.shapes.standard.Link({
         source: {
             id: source.id
         },
@@ -246,8 +262,10 @@ function link(source, target, label, vertices) {
                 }
             }
         }],
+        smooth: true,
         vertices: vertices || []
     });
+    cell.attr('line/strokeWidth', 3);
     graphAnswer.addCell(cell);
     return cell;
 }
@@ -260,7 +278,7 @@ function link(source, target, label, vertices) {
  * @param {String} label : Transition label (0 or 1).
  */
 function questionLink(source, target, label) {
-    var cell = new joint.shapes.fsa.Arrow({
+    var cell = new joint.shapes.standard.Link({
         source: {
             id: source.id
         },
@@ -276,8 +294,10 @@ function questionLink(source, target, label) {
                 }
             }
         }],
+        smooth: true,
         vertices: []
     });
+    cell.attr('line/strokeWidth', 3);
     graphQuestion.addCell(cell);
 }
 
@@ -292,6 +312,9 @@ function unhighlight(highlighter) {
             paperAnswer.findViewByModel(element).unhighlight(null, highlighter);
         });
     }
+    graphAnswer.getLinks().forEach(link => {
+        link.attr('line/stroke', 'black');
+    });
 }
 
 /**
@@ -305,6 +328,9 @@ function unhighlightQuestion(highlighter) {
             paperQuestion.findViewByModel(element).unhighlight(null, highlighter);
         });
     }
+    graphQuestion.getLinks().forEach(link => {
+        link.attr('line/stroke', 'black');
+    });
 }
 
 /**
@@ -383,7 +409,7 @@ function deleteState() {
         graphAnswer.removeCells(selectedState);
         states.delete(selectedState.id);
         nodes.delete(selectedState);
-        if(finishStates.has(selectedState)){
+        if (finishStates.has(selectedState)) {
             finishStates.delete(selectedState);
         }
         selectedState = null;
@@ -415,12 +441,16 @@ function makeFinish() {
  * @param {String} literal : Name of the transition (0 or 1)
  */
 function newTransition(literal) {
-    if (selectedState != null) {
-        infoTextColor("Bitte auf das Ziel klicken", "black");
-        transitionSetFlag = true;
-        lbl = literal;
+    if (selectedState.attributes.type == "fsa.State") {
+        if (selectedState != null) {
+            infoTextColor("Bitte auf das Ziel klicken", "black");
+            transitionSetFlag = true;
+            lbl = literal;
+        } else {
+            infoTextColor("Bitte erst einen Zustand auswählen", "red");
+        }
     } else {
-        infoTextColor("Bitte erst einen Zustand auswählen", "red");
+        infoTextColor("Für diese Aktion muss ein Zustand ausgewählt sein.", "red");
     }
 }
 
@@ -431,42 +461,47 @@ function newTransition(literal) {
  * @param {String} lbl : Name of the transition (0 or 1).
  */
 function setTransition(node, lbl) {
-    var from = selectedState.id;
-    var to = node.id;
-    var newNeeded = true;
-    if (graphAnswer.getLinks().length > 0) {
-        graphAnswer.getLinks().forEach(linkId => {
-            graphAnswer.getLinks().forEach(graphElement => {
-                if (linkId.id == graphElement.id && newNeeded) {
-                    if (from == graphElement.source().id && to == graphElement.target().id) {
-                        if (graphElement.attributes.labels[0].attrs.text.text.includes(lbl)) {
-                            infoTextColor("Diese Transition existiert bereits.", "red");
-                        } else {
-                            graphElement.attributes.labels[0].attrs.text.text = ("0, 1");
-                            graphElement.attr('text/text', '0, 1');
+    let from = selectedState.id;
+    let to = node.id;
+    let newNeeded = true;
+    if (node.attributes.type == "standard.Link") {
+        infoTextColor("Bitte einen Zustand als Ziel der Transition auswählen. Mit der Auswahl des beginnenden Zustands erneut beginnen.", 'red');
+        transitionSetFlag = false;
+    } else {
+        if (graphAnswer.getLinks().length > 0) {
+            graphAnswer.getLinks().forEach(linkId => {
+                graphAnswer.getLinks().forEach(graphElement => {
+                    if (linkId.id == graphElement.id && newNeeded) {
+                        if (from == graphElement.source().id && to == graphElement.target().id) {
+                            if (graphElement.attributes.labels[0].attrs.text.text.includes(lbl)) {
+                                infoTextColor("Diese Transition existiert bereits.", "red");
+                            } else {
+                                graphElement.attributes.labels[0].attrs.text.text = ("0, 1");
+                                graphElement.attr('text/text', '0, 1');
+                            }
+                            newNeeded = false;
                         }
+                    }
+                });
+            });
+        }
+        if (graphAnswer.getLinks().length > 0) {
+            graphAnswer.getLinks().forEach(linkId => {
+                if (newNeeded && from == linkId.source().id) {
+                    if (linkId.label().attrs.text.text.includes(lbl)) {
+                        infoTextColor("Dieser Zustand hat bereits eine Transition mit diesem Literal.", "red");
                         newNeeded = false;
                     }
                 }
             });
-        });
+        }
+        if (newNeeded) {
+            link(selectedState, node, lbl);
+            infoTextColor("Transition erfolgreich erstellt.", "black");
+        }
+        transitionSetFlag = false;
+        lbl = null;
     }
-    if (graphAnswer.getLinks().length > 0) {
-        graphAnswer.getLinks().forEach(linkId => {
-            if (newNeeded && from == linkId.source().id) {
-                if (linkId.label().attrs.text.text.includes(lbl)) {
-                    infoTextColor("Dieser Zustand hat bereits eine Transition mit diesem Literal.", "red");
-                    newNeeded = false;
-                }
-            }
-        });
-    }
-    if (newNeeded) {
-        link(selectedState, node, lbl);
-        infoTextColor("Transition erfolgreich erstellt.", "black");
-    }
-    transitionSetFlag = false;
-    lbl = null;
 }
 
 /**
@@ -478,6 +513,16 @@ function finishButtonText() {
         document.getElementById("makeFinish").textContent = "Zielzustand entfernen";
     } else {
         document.getElementById("makeFinish").textContent = "Zum Zielzustand machen";
+    }
+}
+
+function deleteButtonText() {
+    if (graphAnswer.getLinks().includes(selectedState)) {
+        document.getElementById('deleteState').innerHTML = "Transition löschen";
+    } else if (graphAnswer.getElements().includes(selectedState)) {
+        document.getElementById('deleteState').innerHTML = "Zustand löschen";
+    } else {
+        document.getElementById('deleteState').innerHTML = "Zustand/Transition löschen";
     }
 }
 
@@ -550,7 +595,51 @@ function loadQuestion(id) {
                     }
                 }
                 break;
-
+            case "ndet":
+                packedQuestion = {
+                    questionText: "Wandeln Sie diesen nichtdeterministischen Automaten in einen deterministischen um.",
+                    questionFSM: {
+                        start: 0,
+                        states: ["q0", "q1"],
+                        ends: [1],
+                        transitions: [{
+                            from: "q0",
+                            sign: "0",
+                            to: "q0"
+                        }, {
+                            from: "q0",
+                            sign: "1",
+                            to: "q0"
+                        }, {
+                            from: "q0",
+                            sign: "1",
+                            to: "q1"
+                        }]
+                    },
+                    solutionFSM: {
+                        start: 0,
+                        states: ["q0", "q1"],
+                        ends: [1],
+                        transitions: [{
+                            from: "q0",
+                            sign: "0",
+                            to: "q0"
+                        }, {
+                            from: "q0",
+                            sign: "1",
+                            to: "q1"
+                        }, {
+                            from: "q1",
+                            sign: "0",
+                            to: "q0"
+                        }, {
+                            from: "q1",
+                            sign: "1",
+                            to: "q1"
+                        }]
+                    }
+                }
+                break;
             default:
                 break;
         }
@@ -622,7 +711,7 @@ function drawQuestion(fsm) {
                         if (transition.from == graphElement.source().id &&
                             transition.to == graphElement.target().id) {
                             if (!graphElement.attributes.labels[0].attrs.text.text.includes(transition.sign)) {
-                                graphElement.attributes.labels[0].attrs.text.text = ("0 , 1");
+                                graphElement.attributes.labels[0].attrs.text.text = ("0, 1");
                                 graphElement.attr('text/text', '0, 1');
                             }
                             newNeeded = false;
@@ -640,7 +729,13 @@ function drawQuestion(fsm) {
 
     fsm.ends.forEach(end => {
         graphQuestion.getCell(fsm.states[end]).attr('circle/fill', 'yellow');
-    })
+    });
+
+    graphQuestion.getLinks().forEach(link => {
+        adjustVertices(graphQuestion, link);
+    });
+
+    updateSelfLoops(graphQuestion);
 }
 
 /**
@@ -657,7 +752,12 @@ function check() {
             onLoad();
         }
     } else {
-        alert(alertText);
+        if (document.getElementById("questionType").innerHTML != "minimize" && fsmToCheck.equalLight(solutionFSM) == 0) {
+            alert("Diese Antwort ist korrekt, jedoch noch nicht minimal.");
+            if (confirm("Für einen Minimalen Automaten gilt noch:\n" + equality + "\nAbrrechen, um es weiter zu versuchen, OK für die nächste Aufgabe."));
+        } else {
+            alert(alertText);
+        }
     }
 }
 
@@ -765,27 +865,6 @@ function pushStateToSelectedBottomState(cellId) {
     }
 }
 
-function getHalfcircleVertex(source, target) {
-    var sx = source.position().x;
-    var sy = source.position().y;
-    var tx = target.position().x;
-    var ty = target.position().y;
-
-    tx = tx - sx;
-    ty = ty - sy;
-
-    var mx = tx / 2;
-    var my = ty / 2;
-
-    var vx = ((ty - my) / 2) + sx;
-    var vy = -(tx - mx) / 2 + sy;
-
-    return {
-        x: vx,
-        y: vy
-    };
-}
-
 /**
  * Generates an alert with accepted char sequences of the question FSM.
  */
@@ -805,7 +884,7 @@ function hintBottom() {
  * 
  * @param {Boolean} answer : true = answer; false = question.
  */
-function hint(answer){
+function hint(answer) {
     let hints = (answer) ? bottomHints : topHints;
 
     let hintCount = (answer) ? hintCountBottom : hintCountTop;
@@ -830,11 +909,194 @@ function hint(answer){
         }
     }
 
-    if(answer){
+    if (answer) {
         hintCountBottom += (hintCountBottom < 4) ? 1 : 0;
-    }else{
+    } else {
         hintCountTop += (hintCountTop < 4) ? 1 : 0;
     }
 
     alert(hintStringsFormatted);
+}
+
+/**
+ * This function is copied from the jointJS tutorial, which can be found on 
+ * https://resources.jointjs.com/tutorial/multiple-links-between-elements .
+ */
+function adjustVertices(graph, cell) {
+
+    // if `cell` is a view, find its model
+    cell = cell.model || cell;
+
+    if (cell instanceof joint.dia.Element) {
+        // `cell` is an element
+
+        _.chain(graph.getConnectedLinks(cell))
+            .groupBy(function (link) {
+
+                // the key of the group is the model id of the link's source or target
+                // cell id is omitted
+                return _.omit([link.source().id, link.target().id], cell.id)[0];
+            })
+            .each(function (group, key) {
+
+                // if the member of the group has both source and target model
+                // then adjust vertices
+                if (key !== 'undefined') adjustVertices(graph, _.first(group));
+            })
+            .value();
+
+        return;
+    }
+
+    // `cell` is a link
+    // get its source and target model IDs
+    var sourceId = cell.get('source').id || cell.previous('source').id;
+    var targetId = cell.get('target').id || cell.previous('target').id;
+
+    // if one of the ends is not a model
+    // (if the link is pinned to paper at a point)
+    // the link is interpreted as having no siblings
+    if (!sourceId || !targetId) return;
+
+    // identify link siblings
+    var siblings = _.filter(graph.getLinks(), function (sibling) {
+
+        var siblingSourceId = sibling.source().id;
+        var siblingTargetId = sibling.target().id;
+
+        // if source and target are the same
+        // or if source and target are reversed
+        return ((siblingSourceId === sourceId) && (siblingTargetId === targetId)) ||
+            ((siblingSourceId === targetId) && (siblingTargetId === sourceId));
+    });
+
+    var numSiblings = siblings.length;
+    switch (numSiblings) {
+
+        case 0: {
+            // the link has no siblings
+            break;
+
+        }
+        case 1: {
+            // there is only one link
+            // no vertices needed
+            if (sourceId != targetId) {
+                cell.unset('vertices');
+            }
+            break;
+
+        }
+        default: {
+            // there are multiple siblings
+            // we need to create vertices
+
+            // find the middle point of the link
+            var sourceCenter = graph.getCell(sourceId).getBBox().center();
+            var targetCenter = graph.getCell(targetId).getBBox().center();
+            var midPoint = g.Line(sourceCenter, targetCenter).midpoint();
+
+            // find the angle of the link
+            var theta = sourceCenter.theta(targetCenter);
+
+            // constant
+            // the maximum distance between two sibling links
+            var GAP = 40;
+
+            _.each(siblings, function (sibling, index) {
+
+                // we want offset values to be calculated as 0, 20, 20, 40, 40, 60, 60 ...
+                var offset = GAP * Math.ceil(index / 2);
+
+                // place the vertices at points which are `offset` pixels perpendicularly away
+                // from the first link
+                //
+                // as index goes up, alternate left and right
+                //
+                //  ^  odd indices
+                //  |
+                //  |---->  index 0 sibling - centerline (between source and target centers)
+                //  |
+                //  v  even indices
+                var sign = ((index % 2) ? 1 : -1);
+
+                // to assure symmetry, if there is an even number of siblings
+                // shift all vertices leftward perpendicularly away from the centerline
+                if ((numSiblings % 2) === 0) {
+                    offset -= ((GAP / 2) * sign);
+                }
+
+                // make reverse links count the same as non-reverse
+                var reverse = ((theta < 180) ? 1 : -1);
+
+                // we found the vertex
+                var angle = g.toRad(theta + (sign * reverse * 90));
+                var vertex = g.Point.fromPolar(offset, angle, midPoint);
+
+                // replace vertices array with `vertex`
+                sibling.vertices([vertex]);
+            });
+        }
+    }
+}
+
+function adjustAll(graph) {
+    graph.getLinks().forEach(link => {
+        adjustVertices(graph, link);
+    });
+}
+
+function highlightTransititons(graph, node) {
+    let g1 = (graph == graphAnswer) ? graphAnswer : graphQuestion;
+    let g2 = (graph == graphAnswer) ? graphQuestion : graphAnswer;
+
+    let linkSource;
+
+    if (node.model.attributes.type == "standard.Link") {
+        linkSource = g1.getCell(node.model.source().id);
+    } else {
+        linkSource = node.model;
+    }
+
+    if (linkSource != start) {
+        let sourceArray = linkSource.attributes.attrs.text.text.split(', ');
+        sourceArray.forEach(lbl => {
+            g2.getLinks().forEach(link => {
+                if (link.source().id == lbl) {
+                    switch (link.label().attrs.text.text) {
+                        case "0":
+                            link.attr('line/stroke', 'red');
+                            break;
+                        case "1":
+                            link.attr("line/stroke", 'blue');
+                            break;
+                        default:
+                            link.attr("line/stroke", 'magenta');
+                            break;
+                    }
+                }
+            });
+        });
+
+    }
+}
+
+function updateSelfLoops(graph) {
+    graph.getLinks().forEach(link => {
+        if (link.source().id == link.target().id) {
+            let midPoint = graph.getCell(link.source().id).getBBox().bottomRight();
+            let offset = 25;
+
+            link.vertices([{
+                x: midPoint.x + offset,
+                y: midPoint.y - offset / 3
+            }, {
+                x: midPoint.x + offset,
+                y: midPoint.y + offset
+            }, {
+                x: midPoint.x - offset / 3,
+                y: midPoint.y + offset
+            }]);
+        }
+    });
 }

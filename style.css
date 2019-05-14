@@ -9,7 +9,7 @@ body {
 
 #paperAnswer {
     background-color: white;
-    height: 60%;
+    height: 50vh !important;
     width: 100%;
     position: relative;
     left: 0;
@@ -53,4 +53,16 @@ body {
     grid-template-rows: 40vh 40vh;
     grid-column-gap: 5vw;
     grid-row-gap: 10vh;
+}
+
+svg {
+    height: 90%
+}
+
+.joint-paper-grid {
+    height: 90%
+}
+
+.joint-paper-background {
+    height: 90%
 }
