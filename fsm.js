@@ -25,12 +25,30 @@ class FSM {
         this.states.add(state);
     }
 
+    removeState(state) {
+        if (this.states.includes(state)) {
+            this.states.pop(state);
+        }
+    }
+
     addTransition(transition) {
         this.transitions.add(transition);
     }
 
+    removeTransition(transition) {
+        if (this.transitions.includes(transition)) {
+            this.transitions.pop(transition);
+        }
+    }
+
     addEnd(end) {
         this.ends.add(end);
+    }
+
+    removeEnd(end) {
+        if (this.ends.includes(end)) {
+            this.ends.pop(end);
+        }
     }
 
     getNextState(state, sign) {
@@ -48,7 +66,7 @@ class FSM {
      * 
      * @param {FSM} fsm : FSM to compare
      */
-    equalLight(fsm) {
+    equivalence(fsm) {
         let result = 0;
         let mapper = new Map();
         mapper.set(this.start, fsm.start);
@@ -109,25 +127,25 @@ class FSM {
 
         if (this.states.length < fsm.states.length) {
             return "Es fehlen noch Zustände.";
-        }else if (this.states.length > fsm.states.length) {
+        } else if (this.states.length > fsm.states.length) {
             return "Der Automat hat zu viele Zustände.";
         }
 
         if (this.ends.length < fsm.ends.length) {
             return "Es fehlen noch akzeptierende Zustände.";
-        }else if(this.ends.length > fsm.ends.length){
+        } else if (this.ends.length > fsm.ends.length) {
             return "Der Automat hat zu viele akzeptierende Zustände.";
         }
 
-        if (this.transitions.length < fsm.transitions.length
-            || this.transitions.length < this.states.length * 2) {
+        if (this.transitions.length < fsm.transitions.length ||
+            this.transitions.length < this.states.length * 2) {
             return "Es fehlen noch Transitionen.";
-        }else if(this.transitions.length > fsm.transitions.length
-            || this.transitions.length > this.states.length * 2){
-                return "Der Automat hat zu viele Transitionen";
-            }
+        } else if (this.transitions.length > fsm.transitions.length ||
+            this.transitions.length > this.states.length * 2) {
+            return "Der Automat hat zu viele Transitionen";
+        }
 
-        return this.equalLight(fsm);
+        return this.equivalence(fsm);
     }
 
     /**
