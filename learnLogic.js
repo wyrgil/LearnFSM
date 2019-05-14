@@ -441,12 +441,16 @@ function makeFinish() {
  * @param {String} literal : Name of the transition (0 or 1)
  */
 function newTransition(literal) {
-    if (selectedState != null) {
-        infoTextColor("Bitte auf das Ziel klicken", "black");
-        transitionSetFlag = true;
-        lbl = literal;
-    } else {
-        infoTextColor("Bitte erst einen Zustand auswählen", "red");
+    if (selectedState.attributes.type == "fsa.State") {
+        if (selectedState != null) {
+            infoTextColor("Bitte auf das Ziel klicken", "black");
+            transitionSetFlag = true;
+            lbl = literal;
+        } else {
+            infoTextColor("Bitte erst einen Zustand auswählen", "red");
+        }
+    }else{
+        infoTextColor("Für diese Aktion muss ein Zustand ausgewählt sein.", "red");
     }
 }
 
@@ -457,42 +461,47 @@ function newTransition(literal) {
  * @param {String} lbl : Name of the transition (0 or 1).
  */
 function setTransition(node, lbl) {
-    var from = selectedState.id;
-    var to = node.id;
-    var newNeeded = true;
-    if (graphAnswer.getLinks().length > 0) {
-        graphAnswer.getLinks().forEach(linkId => {
-            graphAnswer.getLinks().forEach(graphElement => {
-                if (linkId.id == graphElement.id && newNeeded) {
-                    if (from == graphElement.source().id && to == graphElement.target().id) {
-                        if (graphElement.attributes.labels[0].attrs.text.text.includes(lbl)) {
-                            infoTextColor("Diese Transition existiert bereits.", "red");
-                        } else {
-                            graphElement.attributes.labels[0].attrs.text.text = ("0, 1");
-                            graphElement.attr('text/text', '0, 1');
+    let from = selectedState.id;
+    let to = node.id;
+    let newNeeded = true;
+    if (node.attributes.type == "standard.Link") {
+        infoTextColor("Bitte einen Zustand als Ziel der Transition auswählen. Mit der Auswahl des beginnenden Zustands erneut beginnen.", 'red');
+        transitionSetFlag = false;
+    } else {
+        if (graphAnswer.getLinks().length > 0) {
+            graphAnswer.getLinks().forEach(linkId => {
+                graphAnswer.getLinks().forEach(graphElement => {
+                    if (linkId.id == graphElement.id && newNeeded) {
+                        if (from == graphElement.source().id && to == graphElement.target().id) {
+                            if (graphElement.attributes.labels[0].attrs.text.text.includes(lbl)) {
+                                infoTextColor("Diese Transition existiert bereits.", "red");
+                            } else {
+                                graphElement.attributes.labels[0].attrs.text.text = ("0, 1");
+                                graphElement.attr('text/text', '0, 1');
+                            }
+                            newNeeded = false;
                         }
+                    }
+                });
+            });
+        }
+        if (graphAnswer.getLinks().length > 0) {
+            graphAnswer.getLinks().forEach(linkId => {
+                if (newNeeded && from == linkId.source().id) {
+                    if (linkId.label().attrs.text.text.includes(lbl)) {
+                        infoTextColor("Dieser Zustand hat bereits eine Transition mit diesem Literal.", "red");
                         newNeeded = false;
                     }
                 }
             });
-        });
+        }
+        if (newNeeded) {
+            link(selectedState, node, lbl);
+            infoTextColor("Transition erfolgreich erstellt.", "black");
+        }
+        transitionSetFlag = false;
+        lbl = null;
     }
-    if (graphAnswer.getLinks().length > 0) {
-        graphAnswer.getLinks().forEach(linkId => {
-            if (newNeeded && from == linkId.source().id) {
-                if (linkId.label().attrs.text.text.includes(lbl)) {
-                    infoTextColor("Dieser Zustand hat bereits eine Transition mit diesem Literal.", "red");
-                    newNeeded = false;
-                }
-            }
-        });
-    }
-    if (newNeeded) {
-        link(selectedState, node, lbl);
-        infoTextColor("Transition erfolgreich erstellt.", "black");
-    }
-    transitionSetFlag = false;
-    lbl = null;
 }
 
 /**
@@ -508,11 +517,11 @@ function finishButtonText() {
 }
 
 function deleteButtonText() {
-    if (graphAnswer.getLinks().includes(selectedState)){
+    if (graphAnswer.getLinks().includes(selectedState)) {
         document.getElementById('deleteState').innerHTML = "Transition löschen";
-    }else if(graphAnswer.getElements().includes(selectedState)){
+    } else if (graphAnswer.getElements().includes(selectedState)) {
         document.getElementById('deleteState').innerHTML = "Zustand löschen";
-    }else{
+    } else {
         document.getElementById('deleteState').innerHTML = "Zustand/Transition löschen";
     }
 }
@@ -992,8 +1001,8 @@ function highlightTransititons(graph, node) {
 
     let linkSource;
 
-    if (g1.getLinks().includes(node.model)) {
-        linkSource = node.model.source();
+    if (node.model.attributes.type == "standard.Link") {
+        linkSource = g1.getCell(node.model.source().id);
     } else {
         linkSource = node.model;
     }
@@ -1002,22 +1011,22 @@ function highlightTransititons(graph, node) {
         let sourceArray = linkSource.attributes.attrs.text.text.split(', ');
         sourceArray.forEach(lbl => {
             g2.getLinks().forEach(link => {
-            if (link.source().id == lbl) {
-                switch (link.label().attrs.text.text) {
-                    case "0":
-                        link.attr('line/stroke', 'red');
-                        break;
-                    case "1":
-                        link.attr("line/stroke", 'blue');
-                        break;
-                    default:
-                        link.attr("line/stroke", 'magenta');
-                        break;
+                if (link.source().id == lbl) {
+                    switch (link.label().attrs.text.text) {
+                        case "0":
+                            link.attr('line/stroke', 'red');
+                            break;
+                        case "1":
+                            link.attr("line/stroke", 'blue');
+                            break;
+                        default:
+                            link.attr("line/stroke", 'magenta');
+                            break;
+                    }
                 }
-            }
+            });
         });
-        });
-        
+
     }
 }
 
