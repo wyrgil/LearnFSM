@@ -103,7 +103,7 @@ class FSM {
     equal(fsm) {
         var result = 0;
 
-        if (this.states.length > 0 && !this.start) {
+        if (this.states.length > 0 && this.start == null) {
             return "Es wurde noch kein Startzustand deklariert."
         }
 
@@ -127,7 +127,7 @@ class FSM {
                 return "Der Automat hat zu viele Transitionen";
             }
 
-        return equalLight(fsm);
+        return this.equalLight(fsm);
     }
 
     /**
