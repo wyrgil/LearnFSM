@@ -5,7 +5,8 @@
     <link href="style.css" rel="stylesheet" />
     <link rel="stylesheet" type="text/css" href="joint.css" />
     <meta charset="utf-8" />
-    <meta name="viewport" content="user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, minimal-ui">
+    <meta name="viewport"
+        content="user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, minimal-ui">
     <script src="jquery.js"></script>
     <script src="fsm.js"></script>
     <script src="learnLogic.js"></script>
@@ -21,19 +22,22 @@
     <div id="paperQuestion"></div>
     <div id="options">
         <button id="addToBottom" onclick="addToBottom()">Zustand übernehmen</button>
-        <button id="pushToBottom" onclick="pushToBottom()">Zustand unten hinzufügen</button>
+        <button id="pushToBottom" onclick="pushToBottom()">Zustand unten hinzufügen</button></div>
+    <div>
         <button id="newState" onclick="newState()">Neuer Zustand</button>
         <button id="makeStart" onclick="makeStart()">Zum Startzustand machen</button>
         <button id="transition0" onclick="newTransition('0')">0 Transition</button>
         <button id="transition1" onclick="newTransition('1')">1 Transition</button>
-        <button id="makeFinish" onclick="makeFinish()">Zielzustand</button>
-        <button id="deleteState" onclick="deleteState()">Zustand löschen</button>
+        <button id="makeFinish" onclick="makeFinish()">Zielzustand</button></div>
+    <div>
+        <button id="deleteState" onclick="deleteState()">Zustand/Transition löschen</button></div>
+    <div id="paperAnswer"></div>
+    <div id="infobox">&ThickSpace;</div>
+    <div>
         <button id="check" onclick="check()">Fertig!</button>
         <button id="hint_top" onclick="hintTop()">Hinweis für Frage</button>
         <button id="hint_bottom" onclick="hintBottom()">Hinweis für Antwort</button>
     </div>
-    <div id="paperAnswer"></div>
-    <div id="infobox"></div>
 </body>
 
 </html>

@@ -53,9 +53,6 @@ var bottomHints = 2.5;
 var hintCountTop;
 var hintCountBottom;
 
-var removeButton
-var toolsView
-
 /**
  * This is used to highlight corresponding states in the other paper.
  */
@@ -82,16 +79,6 @@ function onLoad() {
 
     yPos = 0;
 
-    removeButton = new joint.linkTools.Remove({
-        distance: '20%'
-    });
-
-    toolsView = new joint.dia.ToolsView({
-        tools: [removeButton]
-    });
-
-    // linkView.addTools(toolsView);
-
     /**
      * The JointJS graph instance for the answer part.
      */
@@ -103,7 +90,7 @@ function onLoad() {
     paperAnswer = new joint.dia.Paper({
         el: $('#paperAnswer'),
         width: '100%',
-        heigth: '60%',
+        heigth: '50%',
         gridSize: 1,
         model: graphAnswer
     });
@@ -147,6 +134,7 @@ function onLoad() {
         selectedState = node.model;
 
         finishButtonText();
+        deleteButtonText();
 
         unhighlightQuestion(customHighlighter);
 
@@ -206,10 +194,14 @@ function onLoad() {
 
     graphAnswer.on('add remove change:source change:target', function () {
         adjustAll(graphAnswer);
+
+        updateSelfLoops(graphAnswer);
     });
 
     paperAnswer.on('cell:pointerup', function () {
         adjustAll(graphAnswer);
+
+        updateSelfLoops(graphAnswer);
     });
 
     hintCountTop = 0;
@@ -254,9 +246,6 @@ function state(x, y, label) {
  * @param {*} vertices 
  */
 function link(source, target, label, vertices) {
-    var vertex;
-    // vertex = getHalfcircleVertex(source, target);
-    // vertices = [vertex];
     var cell = new joint.shapes.standard.Link({
         source: {
             id: source.id
@@ -278,7 +267,6 @@ function link(source, target, label, vertices) {
     });
     cell.attr('line/strokeWidth', 3);
     graphAnswer.addCell(cell);
-    paperAnswer.findViewByModel(cell).addTools(toolsView);
     return cell;
 }
 
@@ -516,6 +504,16 @@ function finishButtonText() {
         document.getElementById("makeFinish").textContent = "Zielzustand entfernen";
     } else {
         document.getElementById("makeFinish").textContent = "Zum Zielzustand machen";
+    }
+}
+
+function deleteButtonText() {
+    if (graphAnswer.getLinks().includes(selectedState)){
+        document.getElementById('deleteState').innerHTML = "Transition löschen";
+    }else if(graphAnswer.getElements().includes(selectedState)){
+        document.getElementById('deleteState').innerHTML = "Zustand löschen";
+    }else{
+        document.getElementById('deleteState').innerHTML = "Zustand/Transition löschen";
     }
 }
 
@@ -923,7 +921,9 @@ function adjustVertices(graph, cell) {
         case 1: {
             // there is only one link
             // no vertices needed
-            cell.unset('vertices');
+            if (sourceId != targetId) {
+                cell.unset('vertices');
+            }
             break;
 
         }
@@ -986,33 +986,53 @@ function adjustAll(graph) {
     });
 }
 
-function highlightTransititons(graph, node){
+function highlightTransititons(graph, node) {
     let g1 = (graph == graphAnswer) ? graphAnswer : graphQuestion;
     let g2 = (graph == graphAnswer) ? graphQuestion : graphAnswer;
 
     let linkSource;
 
-        if(g1.getLinks().includes(node.model)){
-            linkSource = node.model.source();
-        }else{
-            linkSource = node.model;
-        }
+    if (g1.getLinks().includes(node.model)) {
+        linkSource = node.model.source();
+    } else {
+        linkSource = node.model;
+    }
 
-        if(linkSource != start){
-            g2.getLinks().forEach(link => {
-                if(link.source().id == linkSource.id){
-                    switch (link.label().attrs.text.text) {
-                        case "0":
-                            link.attr('line/stroke', 'red');
-                            break;
-                        case "1":
-                            link.attr("line/stroke", 'blue');
-                            break;
-                        default:
-                            link.attr("line/stroke", 'magenta');
-                            break;
-                    }
+    if (linkSource != start) {
+        g2.getLinks().forEach(link => {
+            if (link.source().id == linkSource.id) {
+                switch (link.label().attrs.text.text) {
+                    case "0":
+                        link.attr('line/stroke', 'red');
+                        break;
+                    case "1":
+                        link.attr("line/stroke", 'blue');
+                        break;
+                    default:
+                        link.attr("line/stroke", 'magenta');
+                        break;
                 }
-            });
+            }
+        });
+    }
+}
+
+function updateSelfLoops(graph) {
+    graph.getLinks().forEach(link => {
+        if (link.source().id == link.target().id) {
+            let midPoint = graph.getCell(link.source().id).getBBox().bottomRight();
+            let offset = 25;
+
+            link.vertices([{
+                x: midPoint.x + offset,
+                y: midPoint.y - offset / 3
+            }, {
+                x: midPoint.x + offset,
+                y: midPoint.y + offset
+            }, {
+                x: midPoint.x - offset / 3,
+                y: midPoint.y + offset
+            }]);
         }
+    });
 }
