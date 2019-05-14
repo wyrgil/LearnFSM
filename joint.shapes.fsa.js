@@ -5,18 +5,25 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 joint.shapes.basic.Circle.define('fsa.State', {
     attrs: {
-        circle: { 'stroke-width': 3 },
-        text: { 'font-weight': '800' }
+        circle: {
+            'stroke-width': 3
+        },
+        text: {
+            'font-weight': '800'
+        }
     }
 });
 
 joint.dia.Element.define('fsa.StartState', {
-    size: { width: 20, height: 20 },
+    size: {
+        width: 0,
+        height: 0
+    },
     attrs: {
         circle: {
             transform: 'translate(10, 10)',
             r: 10,
-            fill: '#000000'
+            fill: '#FFFFFF00'
         }
     }
 }, {
@@ -24,7 +31,10 @@ joint.dia.Element.define('fsa.StartState', {
 });
 
 joint.dia.Element.define('fsa.SelectedState', {
-    size: { width: 20, height: 20 },
+    size: {
+        width: 20,
+        height: 20
+    },
     attrs: {
         circle: {
             transform: 'translate(10, 10)',
@@ -38,7 +48,10 @@ joint.dia.Element.define('fsa.SelectedState', {
 });
 
 joint.dia.Element.define('fsa.EndState', {
-    size: { width: 20, height: 20 },
+    size: {
+        width: 20,
+        height: 20
+    },
     attrs: {
         '.outer': {
             transform: 'translate(10, 10)',
@@ -58,6 +71,10 @@ joint.dia.Element.define('fsa.EndState', {
 });
 
 joint.dia.Link.define('fsa.Arrow', {
-    attrs: { '.marker-target': { d: 'M 10 0 L 0 5 L 10 10 z' }},
+    attrs: {
+        '.marker-target': {
+            d: 'M 10 0 L 0 5 L 10 10 z'
+        }
+    },
     smooth: true
 });
