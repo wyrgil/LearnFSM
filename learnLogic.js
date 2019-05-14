@@ -449,7 +449,7 @@ function newTransition(literal) {
         } else {
             infoTextColor("Bitte erst einen Zustand auswählen", "red");
         }
-    }else{
+    } else {
         infoTextColor("Für diese Aktion muss ein Zustand ausgewählt sein.", "red");
     }
 }
@@ -595,7 +595,51 @@ function loadQuestion(id) {
                     }
                 }
                 break;
-
+            case "ndet":
+                packedQuestion = {
+                    questionText: "Wandeln Sie diesen nichtdeterministischen Automaten in einen deterministischen um.",
+                    questionFSM: {
+                        start: 0,
+                        states: ["q0", "q1"],
+                        ends: [1],
+                        transitions: [{
+                            from: "q0",
+                            sign: "0",
+                            to: "q0"
+                        }, {
+                            from: "q0",
+                            sign: "1",
+                            to: "q0"
+                        }, {
+                            from: "q0",
+                            sign: "1",
+                            to: "q1"
+                        }]
+                    },
+                    solutionFSM: {
+                        start: 0,
+                        states: ["q0", "q1"],
+                        ends: [1],
+                        transitions: [{
+                            from: "q0",
+                            sign: "0",
+                            to: "q0"
+                        }, {
+                            from: "q0",
+                            sign: "1",
+                            to: "q1"
+                        }, {
+                            from: "q1",
+                            sign: "0",
+                            to: "q0"
+                        }, {
+                            from: "q1",
+                            sign: "1",
+                            to: "q1"
+                        }]
+                    }
+                }
+                break;
             default:
                 break;
         }
@@ -690,6 +734,8 @@ function drawQuestion(fsm) {
     graphQuestion.getLinks().forEach(link => {
         adjustVertices(graphQuestion, link);
     });
+
+    updateSelfLoops(graphQuestion);
 }
 
 /**
@@ -706,7 +752,12 @@ function check() {
             onLoad();
         }
     } else {
-        alert(alertText);
+        if (document.getElementById("questionType").innerHTML != "minimize" && fsmToCheck.equalLight(solutionFSM) == 0) {
+            alert("Diese Antwort ist korrekt, jedoch noch nicht minimal.");
+            if (confirm("Für einen Minimalen Automaten gilt noch:\n" + equality + "\nAbrrechen, um es weiter zu versuchen, OK für die nächste Aufgabe."));
+        } else {
+            alert(alertText);
+        }
     }
 }
 
