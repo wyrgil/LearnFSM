@@ -161,10 +161,12 @@ function onLoad() {
             });
         }
 
-        if (node.model.attributes.type == "standard.Link") {
-            highlightTable(graphAnswer.getCell(selectedState.source().id).attributes.attrs.text.text, selectedState.attributes.labels[0].attrs.text.text);
-        } else {
-            highlightTable(selectedState.attributes.attrs.text.text);
+        if (node.model != startLink) {
+            if (node.model.attributes.type == "standard.Link") {
+                highlightTable(graphAnswer.getCell(selectedState.source().id).attributes.attrs.text.text, selectedState.attributes.labels[0].attrs.text.text);
+            } else {
+                highlightTable(selectedState.attributes.attrs.text.text);
+            }
         }
 
         highlightTransitions(graphAnswer, node);
@@ -443,6 +445,8 @@ function makeStart() {
             graphAnswer.removeCells(startLink);
         }
         startLink = link(start, selectedState);
+
+        document.getElementById("answerStartState").innerHTML = "Startzustand: " + selectedState.attributes.attrs.text.text
     }
 }
 
@@ -453,13 +457,55 @@ function deleteState() {
     if (selectedState == null) {
         infoTextColor("Es muss zuerst ein Zustand ausgewählt werden.", "red");
     } else {
-        graphAnswer.removeCells(selectedState);
-        states.delete(selectedState.id);
-        nodes.delete(selectedState);
-        if (finishStates.has(selectedState)) {
-            finishStates.delete(selectedState);
+        if (selectedState != start && selectedState != startLink) {
+            graphAnswer.removeCells(selectedState);
+            states.delete(selectedState.id);
+            nodes.delete(selectedState);
+            if (finishStates.has(selectedState)) {
+                finishStates.delete(selectedState);
+            }
+
+            if (selectedState.attributes.type == "standard.Link") {
+                let table = document.getElementById("answerTransitions");
+                let rows = table.rows;
+                for (let i = 1; i < rows.length; i++) {
+                    if (graphAnswer.getCell(selectedState.source().id).attributes.attrs.text.text == rows[i].cells[0].innerHTML &&
+                        selectedState.attributes.labels[0].attrs.text.text == rows[i].cells[1].innerHTML &&
+                        graphAnswer.getCell(selectedState.target().id).attributes.attrs.text.text == rows[i].cells[2].innerHTML) {
+                        table.deleteRow(i);
+                        i--;
+                    }
+                }
+            } else {
+                let stateText = selectedState.attributes.attrs.text.text;
+                let table = document.getElementById("answerStates");
+                for(let i = 0; i < table.rows[0].cells.length; i++){
+                    if(table.rows[0].cells[i].innerHTML == stateText){
+                        table.rows[0].deleteCell(i);
+                        i--;
+                    }
+                }
+
+                table = document.getElementById("answerTransitions");
+                let rows = table.rows;
+                for (let i = 1; i < rows.length; i++) {
+                    if (stateText == rows[i].cells[0].innerHTML) {
+                        table.deleteRow(i);
+                        i--;
+                    }
+                }
+
+                table = document.getElementById("answerEndStates");
+                for (let i = 0; i < table.rows[0].cells.length; i++) {
+                    if (selectedState.attributes.attrs.text.text == table.rows[0].cells[i].innerHTML) {
+                        table.rows[0].deleteCell(i);
+                        i--;
+                    }
+                }
+            }
+
+            selectedState = null;
         }
-        selectedState = null;
     }
 }
 
@@ -475,8 +521,8 @@ function makeFinish() {
             selectedState.attr('circle/fill', 'white');
 
             let table = document.getElementById("answerEndStates");
-            for(let i = 0; i < table.rows.length; i++){
-                if(selectedState.attributes.attrs.text.text == table.rows[0].cells[i].innerHTML){
+            for (let i = 0; i < table.rows.length; i++) {
+                if (selectedState.attributes.attrs.text.text == table.rows[0].cells[i].innerHTML) {
                     table.rows[0].deleteCell(i);
                 }
             }
@@ -1001,22 +1047,22 @@ function pushStateToSelectedBottomState(cellId) {
 
             let table = document.getElementById("answerTransitions");
             let rows = table.rows;
-            for(let i = 1; i < rows.length; i++){
+            for (let i = 1; i < rows.length; i++) {
                 let snop = rows[i].cells[0].innerHTML;
-                if(saveForTable == snop){
+                if (saveForTable == snop) {
                     rows[i].cells[0].innerHTML = newText.replace("\n", "");
                 }
                 snop = rows[i].cells[2].innerHTML;
-                if(saveForTable == snop){
+                if (saveForTable == snop) {
                     rows[i].cells[2].innerHTML = newText.replace("\n", "");
                 }
                 sortTable();
             }
 
             table = document.getElementById("answerStates");
-            for(let i = 0; i < table.rows[0].cells.length; i++){
+            for (let i = 0; i < table.rows[0].cells.length; i++) {
                 let snop = table.rows[0].cells[i].innerHTML;
-                if(saveForTable == snop){
+                if (saveForTable == snop) {
                     table.rows[0].cells[i].innerHTML = newText.replace("\n", "");
                 }
             }
