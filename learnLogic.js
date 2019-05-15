@@ -130,6 +130,8 @@ function onLoad() {
             // infoText('');
         }
         unhighlight();
+        unhighlightQuestion();
+        unhighlight(customHighlighter);
         node.highlight();
         selectedState = node.model;
 
@@ -175,6 +177,10 @@ function onLoad() {
      */
     paperQuestion.on('cell:pointerdown', function (node) {
         unhighlightQuestion();
+        unhighlight();
+        unhighlightQuestion(customHighlighter);
+        selectedState = null;
+        finishButtonText();
         node.highlight();
         selectedStateQuestion = node.model;
 
@@ -441,13 +447,17 @@ function makeFinish() {
  * @param {String} literal : Name of the transition (0 or 1)
  */
 function newTransition(literal) {
-    if (selectedState.attributes.type == "fsa.State") {
-        if (selectedState != null) {
-            infoTextColor("Bitte auf das Ziel klicken", "black");
-            transitionSetFlag = true;
-            lbl = literal;
+    if (selectedState != null) {
+        if (selectedState.attributes.type == "fsa.State") {
+            if (selectedState != null) {
+                infoTextColor("Bitte auf das Ziel klicken", "black");
+                transitionSetFlag = true;
+                lbl = literal;
+            } else {
+                infoTextColor("Bitte erst einen Zustand auswählen", "red");
+            }
         } else {
-            infoTextColor("Bitte erst einen Zustand auswählen", "red");
+            infoTextColor("Für diese Aktion muss ein Zustand ausgewählt sein.", "red");
         }
     } else {
         infoTextColor("Für diese Aktion muss ein Zustand ausgewählt sein.", "red");
@@ -479,6 +489,7 @@ function setTransition(node, lbl) {
                                 graphElement.attributes.labels[0].attrs.text.text = ("0, 1");
                                 graphElement.attr('text/text', '0, 1');
                             }
+                            transitionToTable(from, lbl, to);
                             newNeeded = false;
                         }
                     }
@@ -498,6 +509,8 @@ function setTransition(node, lbl) {
         if (newNeeded) {
             link(selectedState, node, lbl);
             infoTextColor("Transition erfolgreich erstellt.", "black");
+
+            transitionToTable(from, lbl, to);
         }
         transitionSetFlag = false;
         lbl = null;
@@ -509,10 +522,16 @@ function setTransition(node, lbl) {
  * depending on whether the selected state is a finish state or not.
  */
 function finishButtonText() {
-    if (finishStates.has(selectedState)) {
-        document.getElementById("makeFinish").textContent = "Zielzustand entfernen";
+    let finishBtn = document.getElementById("makeFinish");
+    if (selectedState != null) {
+        finishBtn.disabled = false;
+        if (finishStates.has(selectedState)) {
+            finishBtn.textContent = "Zielzustand entfernen";
+        } else {
+            finishBtn.textContent = "Zum Zielzustand machen";
+        }
     } else {
-        document.getElementById("makeFinish").textContent = "Zum Zielzustand machen";
+        finishBtn.disabled = true;
     }
 }
 
@@ -654,7 +673,9 @@ function loadQuestion(id) {
         packedQuestion.solutionFSM.transitions,
         packedQuestion.solutionFSM.ends);
 
-    drawQuestion(questionFSM);
+    if (packedQuestion.questionFSM) {
+        drawQuestion(questionFSM);
+    }
 }
 
 /**
@@ -671,8 +692,16 @@ function drawQuestion(fsm) {
     });
     graphQuestion.addCell(startQuestion);
 
+    if (fsm.start != null) {
+        document.getElementById("questionStartState").innerHTML = "Startzustand: " + fsm.states[fsm.start];
+    }
+
     let xqPos = 0;
     let yqPos = 0;
+
+    if (fsm.states.length > 0) {
+        document.getElementById("questionStatesText").innerHTML = "Zustände in der Aufgabe:";
+    }
 
     fsm.states.forEach(state => {
         let cell = new joint.shapes.fsa.State({
@@ -698,9 +727,30 @@ function drawQuestion(fsm) {
             yqPos -= delta;
             xqPos += delta;
         }
+
+        let table = document.getElementById("questionStates");
+        let tableCell = table.rows[0].insertCell(table.rows[0].length);
+        tableCell.innerHTML = state;
+        tableCell.setAttribute("id", "questionState-" + state);
     });
 
     questionLink(startQuestion, graphQuestion.getCell(fsm.states[fsm.start]));
+
+    if (fsm.transitions.length > 0) {
+        document.getElementById("questionTransitionsText").innerHTML = "Transitionen in der Aufgabe:";
+
+        let table = document.getElementById("questionTransitions");
+        let row = table.insertRow(0);
+
+        let transitionFrom = row.insertCell(0);
+        transitionFrom.innerHTML = "<b>Von Zustand</b>";
+
+        let transitionSym = row.insertCell(1);
+        transitionSym.innerHTML = "<b>über Symbol</b>";
+
+        let transitionTo = row.insertCell(2);
+        transitionTo.innerHTML = "<b>zu Zustand</b>";
+    }
 
     fsm.transitions.forEach(transition => {
         let newNeeded = true;
@@ -725,10 +775,31 @@ function drawQuestion(fsm) {
                 graphQuestion.getCell(transition.to),
                 transition.sign);
         }
+
+        let table = document.getElementById("questionTransitions");
+        let row = table.insertRow(table.rows.length);
+
+        let transitionFrom = row.insertCell(0);
+        transitionFrom.innerHTML = transition.from;
+
+        let transitionSym = row.insertCell(1);
+        transitionSym.innerHTML = transition.sign;
+
+        let transitionTo = row.insertCell(2);
+        transitionTo.innerHTML = transition.to;
     });
+
+    if (fsm.ends.length > 0) {
+        document.getElementById("questionEndStatesText").innerHTML = "Akzeptierende Zustände in der Aufgabe:";
+    }
 
     fsm.ends.forEach(end => {
         graphQuestion.getCell(fsm.states[end]).attr('circle/fill', 'yellow');
+
+        let table = document.getElementById("questionEndStates");
+        let tableCell = table.rows[0].insertCell(table.rows[0].length);
+        tableCell.innerHTML = fsm.states[end];
+        tableCell.setAttribute("id", "questionEnd-" + fsm.states[end]);
     });
 
     graphQuestion.getLinks().forEach(link => {
@@ -754,7 +825,7 @@ function check() {
     } else {
         if (document.getElementById("questionType").innerHTML != "minimize" && fsmToCheck.equivalence(solutionFSM) == 0) {
             alert("Diese Antwort ist korrekt, jedoch noch nicht minimal.");
-            if (confirm("Für einen Minimalen Automaten gilt noch:\n" + equality + "\nAbrrechen, um es weiter zu versuchen, OK für die nächste Aufgabe.")){
+            if (confirm("Für einen Minimalen Automaten gilt noch:\n" + equality + "\nAbrrechen, um es weiter zu versuchen, OK für die nächste Aufgabe.")) {
                 onLoad();
             }
         } else {
@@ -1101,4 +1172,43 @@ function updateSelfLoops(graph) {
             }]);
         }
     });
+}
+
+function transitionToTable(fromState, symb, toState) {
+    let table = document.getElementById("answerTransitions");
+    let row = table.insertRow(table.rows.length);
+
+    let cellFrom = row.insertCell(0);
+    cellFrom.innerHTML = fromState;
+
+    let cellSign = row.insertCell(1);
+    cellSign.innerHTML = symb;
+
+    let cellTo = row.insertCell(2);
+    cellTo.innerHTML = toState;
+
+    sortAnswerTable();
+}
+
+function sortAnswerTable() {
+    let tableToSort = document.getElementById("answerTransitions");
+    let rows = tableToSort.rows;
+
+    for (let i = 1; i < rows.length; i++) {
+        let min = i;
+        for (let j = i + 1; j < rows.length; j++) {
+            if (rows[i].cells[0].innerHTML.toLowerCase() > rows[j].cells[0].innerHTML.toLowerCase()) {
+                min = j;
+            } else if (rows[i].cells[0].innerHTML.toLowerCase() == rows[j].cells[0].innerHTML.toLowerCase()) {
+                if (rows[i].cells[1].innerHTML.toLowerCase() > rows[j].cells[1].innerHTML.toLowerCase()) {
+                    min = j;
+                } else if (rows[i].cells[1].innerHTML.toLowerCase() == rows[j].cells[1].innerHTML.toLowerCase()) {
+                    if (rows[i].cells[2].innerHTML.toLowerCase() > rows[j].cells[2].innerHTML.toLowerCase()) {
+                        min = j;
+                    }
+                }
+            }
+        }
+        rows[i].parentNode.insertBefore(rows[min], rows[i]);
+    }    
 }

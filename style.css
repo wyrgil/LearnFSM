@@ -14,11 +14,12 @@ body {
     position: relative;
     left: 0;
     top: 0;
+    float: left;
 }
 
 #paperQuestion {
     background-color: #d3d3d3;
-    height: 30% !important;
+    height: 90% !important;
     width: 100%;
     position: relative;
     left: 0;
@@ -56,7 +57,7 @@ body {
 }
 
 svg {
-    height: 90%
+    height: 100%
 }
 
 .joint-paper-grid {
@@ -65,4 +66,61 @@ svg {
 
 .joint-paper-background {
     height: 90%
+}
+
+#questionSection {
+    height: 35%
+}
+
+table{
+    font-size: 1em;
+}
+
+.transitionsTable{
+    width: 100%;
+}
+
+tr:nth-child(even){
+    background-color: #ffffff77;
+}
+
+tr.selected{
+    background-color: yellow;
+}
+
+tr.softselected{
+    background-color: green;
+}
+
+th{
+    text-align: left;
+}
+
+.tablesBox{
+    width: 36%;
+    float: right;
+    margin-left: 4%;
+    text-align: left;
+}
+
+.fsmBox {
+    width: 60%;
+    float: left;
+}
+
+#answerSection{
+    height: 60%;
+}
+
+#answerButtons{
+    float: left;
+}
+
+#deleteState{
+    float: right;
+}
+
+#infoBox{
+    width: 100%;
+    clear: both;
 }
