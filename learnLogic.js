@@ -1056,7 +1056,7 @@ function pushStateToSelectedBottomState(cellId) {
                 if (saveForTable == snop) {
                     rows[i].cells[2].innerHTML = newText.replace("\n", "");
                 }
-                sortTable();
+                sortTable("answerTransitions");
             }
 
             table = document.getElementById("answerStates");
