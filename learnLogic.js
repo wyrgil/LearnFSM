@@ -324,6 +324,8 @@ function unhighlight(highlighter) {
     graphAnswer.getLinks().forEach(link => {
         link.attr('line/stroke', 'black');
     });
+
+    document.getElementById("answerTransitions").classList.remove("tableHighlight");
 }
 
 /**

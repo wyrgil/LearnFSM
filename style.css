@@ -96,6 +96,10 @@ th{
     text-align: left;
 }
 
+tr.tableHighlight{
+    background-color: #FFFF0077;
+}
+
 .tablesBox{
     width: 36%;
     float: right;
