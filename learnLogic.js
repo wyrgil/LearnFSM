@@ -473,9 +473,22 @@ function makeFinish() {
         if (finishStates.has(selectedState)) {
             finishStates.delete(selectedState);
             selectedState.attr('circle/fill', 'white');
+
+            let table = document.getElementById("answerEndStates");
+            for(let i = 0; i < table.rows.length; i++){
+                if(selectedState.attributes.attrs.text.text == table.rows[0].cells[i].innerHTML){
+                    table.rows[0].deleteCell(i);
+                }
+            }
         } else {
             finishStates.add(selectedState);
             selectedState.attr('circle/fill', 'yellow');
+
+            document.getElementById("answerEndStatesText").innerHTML = "Akzeptierende Zustände der Antwort.";
+            let table = document.getElementById("answerEndStates");
+            let tableCell = table.rows[0].insertCell(table.rows[0].length);
+            tableCell.innerHTML = selectedState.attributes.attrs.text.text;
+            tableCell.setAttribute("id", "answerEnd-" + selectedState.attributes.attrs.text.text);
         }
         finishButtonText();
     }
