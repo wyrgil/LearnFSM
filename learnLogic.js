@@ -22,7 +22,7 @@ var paperQuestion;
 var border = 2;
 var borderActive = 4;
 
-var nodeSize = 60;
+var nodeSize = 80;
 
 var start;
 var startLink = null;
@@ -367,9 +367,9 @@ function newState(fromTop) {
     if (!fromTop) {
         stateName = prompt("Wie soll der Zustand heißen?");
     } else {
-        stateName = fromTop;
+        stateName = "{" + fromTop + "}";
     }
-    if (stateName == null || stateName == "") {
+    if (stateName == null || stateName == "" || stateName.replace(' ', '') == "") {
         infoText("Neuen Zustand erstellen abgebrochen.");
     } else {
         if (states.has(stateName)) {
@@ -920,17 +920,23 @@ function pushStateToSelectedBottomState(cellId) {
         infoTextColor("Das ausgewählte Element ist eine Transition.", "red");
     } else {
         if (!graphAnswer.getCell(cellId.id).attributes.attrs.text.text.includes(selectedStateQuestion.id)) {
-            var newText;
-            newText = graphAnswer.getCell(cellId.id).attributes.attrs.text.text + ", " + selectedStateQuestion.id;
+            let newText;
+            newText = graphAnswer.getCell(cellId.id).attributes.attrs.text.text;
+            if(states.has(newText)){
+                states.delete(newText);
+            }
+            newText = newText.substr(1, newText.length - 2);
+            newText += ", " + selectedStateQuestion.id;
             if ((splitText = newText.split(", ")).length > 2) {
                 for (var i = 2; i < splitText.length; i += 2) {
                     splitText[i] = "\n" + splitText[i];
                 }
                 newText = splitText.join(', ');
             }
+            newText = "{" + newText + "}";
             var cellToChange = graphAnswer.getCell(cellId.id);
-            // cellToChange.id = newText;
             cellToChange.attr('text/text', newText);
+            states.add(newText);
             pushToBottomSetFlag = false;
         } else {
             infoTextColor("Dieser Zustand hat diesen Namen bereits.", "red");
@@ -1175,7 +1181,8 @@ function updateSelfLoops(graph) {
 }
 
 function transitionToTable(fromState, symb, toState) {
-    let table = document.getElementById("answerTransitions");
+    let tableId = "answerTransitions";
+    let table = document.getElementById(tableId);
     let row = table.insertRow(table.rows.length);
 
     let cellFrom = row.insertCell(0);
@@ -1187,11 +1194,11 @@ function transitionToTable(fromState, symb, toState) {
     let cellTo = row.insertCell(2);
     cellTo.innerHTML = toState;
 
-    sortAnswerTable();
+    sortTable(tableId);
 }
 
-function sortAnswerTable() {
-    let tableToSort = document.getElementById("answerTransitions");
+function sortTable(id) {
+    let tableToSort = document.getElementById(id);
     let rows = tableToSort.rows;
 
     for (let i = 1; i < rows.length; i++) {
@@ -1210,5 +1217,5 @@ function sortAnswerTable() {
             }
         }
         rows[i].parentNode.insertBefore(rows[min], rows[i]);
-    }    
+    }
 }
