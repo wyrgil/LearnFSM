@@ -223,7 +223,6 @@ function onLoad() {
  */
 function state(x, y, label) {
     var cell = new joint.shapes.fsa.State({
-        id: label,
         position: {
             x: x,
             y: y
@@ -1186,13 +1185,13 @@ function transitionToTable(fromState, symb, toState) {
     let row = table.insertRow(table.rows.length);
 
     let cellFrom = row.insertCell(0);
-    cellFrom.innerHTML = fromState;
+    cellFrom.innerHTML = graphAnswer.getCell(fromState).attributes.attrs.text.text;
 
     let cellSign = row.insertCell(1);
     cellSign.innerHTML = symb;
 
     let cellTo = row.insertCell(2);
-    cellTo.innerHTML = toState;
+    cellTo.innerHTML = graphAnswer.getCell(toState).attributes.attrs.text.text;
 
     sortTable(tableId);
 }
