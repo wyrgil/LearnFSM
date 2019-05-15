@@ -144,17 +144,27 @@ function onLoad() {
             graphQuestion.getElements().forEach(element => {
                 if (element.attributes.type != "fsa.StartState") {
                     let stateText = selectedState.attributes.attrs.text.text;
-                    if(stateText[0] == "{"){
+                    if (stateText[0] == "{") {
                         stateText = stateText.substr(1, stateText.length - 2);
                     }
                     var textSnippets = stateText.split(", ");
                     textSnippets.forEach(snip => {
-                        if (element.attributes.attrs.text.text.includes(snip)) {
+                        let snap = element.attributes.attrs.text.text;
+                        if(snap[0] == "{"){
+                            snap = snap.substr(1, snap.length - 2);
+                        }
+                        if (snap == snip) {
                             paperQuestion.findViewByModel(element).highlight(null, customHighlighter);
                         }
                     });
                 }
             });
+        }
+
+        if(node.model.attributes.type == "standard.Link"){
+            highlightTable(graphAnswer.getCell(selectedState.source().id).attributes.attrs.text.text, selectedState.attributes.labels[0].attrs.text.text);
+        }else{
+            highlightTable(selectedState.attributes.attrs.text.text);
         }
 
         highlightTransitions(graphAnswer, node);
@@ -192,11 +202,21 @@ function onLoad() {
 
         graphAnswer.getElements().forEach(element => {
             if (element != start) {
-                if (element.attributes.attrs.text.text.includes(selectedStateQuestion.id)) {
+                let snap = element.attributes.attrs.text.text;
+                        if(snap[0] == "{"){
+                            snap = snap.substr(1, snap.length - 2);
+                        }
+                if (snap == selectedStateQuestion.id) {
                     paperAnswer.findViewByModel(element).highlight(null, customHighlighter);
                 }
             }
         });
+
+        if(node.model.attributes.type == "standard.Link"){
+            highlightTable(selectedStateQuestion.source().id, selectedStateQuestion.attributes.labels[0].attrs.text.text);
+        }else{
+                    highlightTable(selectedStateQuestion.id);
+        }
 
         highlightTransitions(graphQuestion, node);
         highlightTransitions(graphAnswer, node);
@@ -325,7 +345,11 @@ function unhighlight(highlighter) {
         link.attr('line/stroke', 'black');
     });
 
-    document.getElementById("answerTransitions").classList.remove("tableHighlight");
+    let table = document.getElementById("answerTransitions");
+    let rows = table.rows;
+    for (let i = 1; i < rows.length; i++) {
+        rows[i].classList.remove("tableHighlight");
+    }
 }
 
 /**
@@ -342,6 +366,12 @@ function unhighlightQuestion(highlighter) {
     graphQuestion.getLinks().forEach(link => {
         link.attr('line/stroke', 'black');
     });
+
+    let table = document.getElementById("questionTransitions");
+    let rows = table.rows;
+    for (let i = 1; i < rows.length; i++) {
+        rows[i].classList.remove("tableHighlight");
+    }
 }
 
 /**
@@ -391,6 +421,7 @@ function newState(fromTop) {
             infoTextColor("Neuen Zustand " + stateName + " erfolgreich erstellt.", "green");
             states.add(stateName);
             nodes.add(node);
+            document.getElementById("answerEndStatesText").innerHTML = "Akzeptierende Zustände in der Aufgabe:";
         }
     }
 }
@@ -487,8 +518,8 @@ function setTransition(node, lbl) {
             graphAnswer.getLinks().forEach(linkId => {
                 graphAnswer.getElements().forEach(graphElement => {
                     if (graphElement.id == linkId.source().id && newNeeded) {
-                        if (from == linkId.source().id
-                         && to == linkId.target().id) {
+                        if (from == linkId.source().id &&
+                            to == linkId.target().id) {
                             if (linkId.attributes.labels[0].attrs.text.text.includes(lbl)) {
                                 infoTextColor("Diese Transition existiert bereits.", "red");
                             } else {
@@ -925,10 +956,14 @@ function pushStateToSelectedBottomState(cellId) {
     if (isTransition) {
         infoTextColor("Das ausgewählte Element ist eine Transition.", "red");
     } else {
-        if (!graphAnswer.getCell(cellId.id).attributes.attrs.text.text.includes(selectedStateQuestion.id)) {
+        let snap = graphAnswer.getCell(cellId.id).attributes.attrs.text.text;
+                        if(snap[0] == "{"){
+                            snap = snap.substr(1, snap.length - 2);
+                        }
+        if (snap != selectedStateQuestion.id) {
             let newText;
             newText = graphAnswer.getCell(cellId.id).attributes.attrs.text.text;
-            if(states.has(newText)){
+            if (states.has(newText)) {
                 states.delete(newText);
             }
             newText = newText.substr(1, newText.length - 2);
@@ -1145,23 +1180,29 @@ function highlightTransitions(graph, node) {
 
     if (linkSource && linkSource != start) {
         let sourceText = linkSource.attributes.attrs.text.text;
-        if(sourceText[0] == "{"){
+        if (sourceText[0] == "{") {
             sourceText = sourceText.substr(1, sourceText.length - 2);
         }
         let sourceArray = sourceText.split(', ');
         sourceArray.forEach(lbl => {
             g2.getLinks().forEach(link => {
-                if (g2.getCell(link.source().id).attributes.type != "fsa.StartState" && g2.getCell(link.source().id).attributes.attrs.text.text == lbl) {
-                    switch (link.label().attrs.text.text) {
-                        case "0":
-                            link.attr('line/stroke', 'red');
-                            break;
-                        case "1":
-                            link.attr("line/stroke", 'blue');
-                            break;
-                        default:
-                            link.attr("line/stroke", 'magenta');
-                            break;
+                if (g2.getCell(link.source().id).attributes.type != "fsa.StartState") {
+                    let otherGraphText = g2.getCell(link.source().id).attributes.attrs.text.text;
+                    if (otherGraphText[0] == "{") {
+                        otherGraphText = otherGraphText.substr(1, otherGraphText.length - 2);
+                    }
+                    if (otherGraphText == lbl) {
+                        switch (link.label().attrs.text.text) {
+                            case "0":
+                                link.attr('line/stroke', 'red');
+                                break;
+                            case "1":
+                                link.attr("line/stroke", 'blue');
+                                break;
+                            default:
+                                link.attr("line/stroke", 'magenta');
+                                break;
+                        }
                     }
                 }
             });
@@ -1220,15 +1261,38 @@ function sortTable(id) {
     }
 }
 
-function sortTableHelper(rows, i, j, k, min){
-    if(k >= rows.length){
+function sortTableHelper(rows, i, j, k, min) {
+    if (k >= rows.length) {
         return min;
-    }else{
+    } else {
         if (rows[i].cells[0].innerHTML.toLowerCase() > rows[j].cells[0].innerHTML.toLowerCase()) {
             min = j;
         } else if (rows[i].cells[0].innerHTML.toLowerCase() == rows[j].cells[0].innerHTML.toLowerCase()) {
-            return sortTableHelper(rows, i, j, k+1, min);
+            return sortTableHelper(rows, i, j, k + 1, min);
         }
         return min;
+    }
+}
+
+function highlightTable(fromName, sign = "01") {
+    if(fromName[0] == "{"){
+        fromName = fromName.substr(1, fromName.length - 2);
+    }
+    let table = document.getElementById("answerTransitions");
+    let rows = table.rows;
+    for (let i = 1; i < rows.length; i++) {
+        if (rows[i].cells[0].innerHTML.includes(fromName) &&
+            sign.includes(rows[i].cells[1].innerHTML)) {
+            rows[i].classList.add("tableHighlight");
+        }
+    }
+
+    table = document.getElementById("questionTransitions");
+    rows = table.rows;
+    for (let i = 1; i < rows.length; i++) {
+        if (rows[i].cells[0].innerHTML.includes(fromName) &&
+            sign.includes(rows[i].cells[1].innerHTML)) {
+            rows[i].classList.add("tableHighlight");
+        }
     }
 }
