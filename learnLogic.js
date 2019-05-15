@@ -150,7 +150,7 @@ function onLoad() {
                     var textSnippets = stateText.split(", ");
                     textSnippets.forEach(snip => {
                         let snap = element.attributes.attrs.text.text;
-                        if(snap[0] == "{"){
+                        if (snap[0] == "{") {
                             snap = snap.substr(1, snap.length - 2);
                         }
                         if (snap == snip) {
@@ -161,9 +161,9 @@ function onLoad() {
             });
         }
 
-        if(node.model.attributes.type == "standard.Link"){
+        if (node.model.attributes.type == "standard.Link") {
             highlightTable(graphAnswer.getCell(selectedState.source().id).attributes.attrs.text.text, selectedState.attributes.labels[0].attrs.text.text);
-        }else{
+        } else {
             highlightTable(selectedState.attributes.attrs.text.text);
         }
 
@@ -203,19 +203,19 @@ function onLoad() {
         graphAnswer.getElements().forEach(element => {
             if (element != start) {
                 let snap = element.attributes.attrs.text.text;
-                        if(snap[0] == "{"){
-                            snap = snap.substr(1, snap.length - 2);
-                        }
+                if (snap[0] == "{") {
+                    snap = snap.substr(1, snap.length - 2);
+                }
                 if (snap == selectedStateQuestion.id) {
                     paperAnswer.findViewByModel(element).highlight(null, customHighlighter);
                 }
             }
         });
 
-        if(node.model.attributes.type == "standard.Link"){
+        if (node.model.attributes.type == "standard.Link") {
             highlightTable(selectedStateQuestion.source().id, selectedStateQuestion.attributes.labels[0].attrs.text.text);
-        }else{
-                    highlightTable(selectedStateQuestion.id);
+        } else {
+            highlightTable(selectedStateQuestion.id);
         }
 
         highlightTransitions(graphQuestion, node);
@@ -421,7 +421,12 @@ function newState(fromTop) {
             infoTextColor("Neuen Zustand " + stateName + " erfolgreich erstellt.", "green");
             states.add(stateName);
             nodes.add(node);
-            document.getElementById("answerEndStatesText").innerHTML = "Akzeptierende Zustände in der Aufgabe:";
+            document.getElementById("answerStatesText").innerHTML = "Zustände in der Aufgabe:";
+
+            let table = document.getElementById("answerStates");
+            let tableCell = table.rows[0].insertCell(table.rows[0].length);
+            tableCell.innerHTML = stateName;
+            tableCell.setAttribute("id", "answerState-" + stateName);
         }
     }
 }
@@ -957,9 +962,10 @@ function pushStateToSelectedBottomState(cellId) {
         infoTextColor("Das ausgewählte Element ist eine Transition.", "red");
     } else {
         let snap = graphAnswer.getCell(cellId.id).attributes.attrs.text.text;
-                        if(snap[0] == "{"){
-                            snap = snap.substr(1, snap.length - 2);
-                        }
+        let saveForTable = snap;
+        if (snap[0] == "{") {
+            snap = snap.substr(1, snap.length - 2);
+        }
         if (snap != selectedStateQuestion.id) {
             let newText;
             newText = graphAnswer.getCell(cellId.id).attributes.attrs.text.text;
@@ -979,6 +985,28 @@ function pushStateToSelectedBottomState(cellId) {
             cellToChange.attr('text/text', newText);
             states.add(newText);
             pushToBottomSetFlag = false;
+
+            let table = document.getElementById("answerTransitions");
+            let rows = table.rows;
+            for(let i = 1; i < rows.length; i++){
+                let snop = rows[i].cells[0].innerHTML;
+                if(saveForTable == snop){
+                    rows[i].cells[0].innerHTML = newText.replace("\n", "");
+                }
+                snop = rows[i].cells[2].innerHTML;
+                if(saveForTable == snop){
+                    rows[i].cells[2].innerHTML = newText.replace("\n", "");
+                }
+                sortTable();
+            }
+
+            table = document.getElementById("answerStates");
+            for(let i = 0; i < table.rows[0].cells.length; i++){
+                let snop = table.rows[0].cells[i].innerHTML;
+                if(saveForTable == snop){
+                    table.rows[0].cells[i].innerHTML = newText.replace("\n", "");
+                }
+            }
         } else {
             infoTextColor("Dieser Zustand hat diesen Namen bereits.", "red");
         }
@@ -1275,7 +1303,7 @@ function sortTableHelper(rows, i, j, k, min) {
 }
 
 function highlightTable(fromName, sign = "01") {
-    if(fromName[0] == "{"){
+    if (fromName[0] == "{") {
         fromName = fromName.substr(1, fromName.length - 2);
     }
     let table = document.getElementById("answerTransitions");
