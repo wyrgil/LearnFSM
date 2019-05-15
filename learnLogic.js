@@ -143,7 +143,11 @@ function onLoad() {
         if (!graphAnswer.getLinks().includes(node.model) && node.model != start) {
             graphQuestion.getElements().forEach(element => {
                 if (element.attributes.type != "fsa.StartState") {
-                    var textSnippets = selectedState.attributes.attrs.text.text.split(", ");
+                    let stateText = selectedState.attributes.attrs.text.text;
+                    if(stateText[0] == "{"){
+                        stateText = stateText.substr(1, stateText.length - 2);
+                    }
+                    var textSnippets = stateText.split(", ");
                     textSnippets.forEach(snip => {
                         if (element.attributes.attrs.text.text.includes(snip)) {
                             paperQuestion.findViewByModel(element).highlight(null, customHighlighter);
@@ -153,8 +157,8 @@ function onLoad() {
             });
         }
 
-        highlightTransititons(graphAnswer, node);
-        highlightTransititons(graphQuestion, node);
+        highlightTransitions(graphAnswer, node);
+        highlightTransitions(graphQuestion, node);
     });
 
     /**
@@ -194,8 +198,8 @@ function onLoad() {
             }
         });
 
-        highlightTransititons(graphQuestion, node);
-        highlightTransititons(graphAnswer, node);
+        highlightTransitions(graphQuestion, node);
+        highlightTransitions(graphAnswer, node);
     });
 
     graphAnswer.on('add remove change:source change:target', function () {
@@ -479,16 +483,17 @@ function setTransition(node, lbl) {
     } else {
         if (graphAnswer.getLinks().length > 0) {
             graphAnswer.getLinks().forEach(linkId => {
-                graphAnswer.getLinks().forEach(graphElement => {
-                    if (linkId.id == graphElement.id && newNeeded) {
-                        if (from == graphElement.source().id && to == graphElement.target().id) {
-                            if (graphElement.attributes.labels[0].attrs.text.text.includes(lbl)) {
+                graphAnswer.getElements().forEach(graphElement => {
+                    if (graphElement.id == linkId.source().id && newNeeded) {
+                        if (from == linkId.source().id
+                         && to == linkId.target().id) {
+                            if (linkId.attributes.labels[0].attrs.text.text.includes(lbl)) {
                                 infoTextColor("Diese Transition existiert bereits.", "red");
                             } else {
-                                graphElement.attributes.labels[0].attrs.text.text = ("0, 1");
-                                graphElement.attr('text/text', '0, 1');
+                                linkId.attributes.labels[0].attrs.text.text = ("0, 1");
+                                linkId.attr('text/text', '0, 1');
+                                transitionToTable(from, lbl, to);
                             }
-                            transitionToTable(from, lbl, to);
                             newNeeded = false;
                         }
                     }
@@ -497,7 +502,7 @@ function setTransition(node, lbl) {
         }
         if (graphAnswer.getLinks().length > 0) {
             graphAnswer.getLinks().forEach(linkId => {
-                if (newNeeded && from == linkId.source().id) {
+                if (newNeeded && from == graphAnswer.getCell(linkId.source().id).attributes.attrs.text.text) {
                     if (linkId.label().attrs.text.text.includes(lbl)) {
                         infoTextColor("Dieser Zustand hat bereits eine Transition mit diesem Literal.", "red");
                         newNeeded = false;
@@ -1124,7 +1129,7 @@ function adjustAll(graph) {
     });
 }
 
-function highlightTransititons(graph, node) {
+function highlightTransitions(graph, node) {
     let g1 = (graph == graphAnswer) ? graphAnswer : graphQuestion;
     let g2 = (graph == graphAnswer) ? graphQuestion : graphAnswer;
 
@@ -1136,11 +1141,15 @@ function highlightTransititons(graph, node) {
         linkSource = node.model;
     }
 
-    if (linkSource != start) {
-        let sourceArray = linkSource.attributes.attrs.text.text.split(', ');
+    if (linkSource && linkSource != start) {
+        let sourceText = linkSource.attributes.attrs.text.text;
+        if(sourceText[0] == "{"){
+            sourceText = sourceText.substr(1, sourceText.length - 2);
+        }
+        let sourceArray = sourceText.split(', ');
         sourceArray.forEach(lbl => {
             g2.getLinks().forEach(link => {
-                if (link.source().id == lbl) {
+                if (g2.getCell(link.source().id).attributes.type != "fsa.StartState" && g2.getCell(link.source().id).attributes.attrs.text.text == lbl) {
                     switch (link.label().attrs.text.text) {
                         case "0":
                             link.attr('line/stroke', 'red');
@@ -1203,18 +1212,21 @@ function sortTable(id) {
     for (let i = 1; i < rows.length; i++) {
         let min = i;
         for (let j = i + 1; j < rows.length; j++) {
-            if (rows[i].cells[0].innerHTML.toLowerCase() > rows[j].cells[0].innerHTML.toLowerCase()) {
-                min = j;
-            } else if (rows[i].cells[0].innerHTML.toLowerCase() == rows[j].cells[0].innerHTML.toLowerCase()) {
-                if (rows[i].cells[1].innerHTML.toLowerCase() > rows[j].cells[1].innerHTML.toLowerCase()) {
-                    min = j;
-                } else if (rows[i].cells[1].innerHTML.toLowerCase() == rows[j].cells[1].innerHTML.toLowerCase()) {
-                    if (rows[i].cells[2].innerHTML.toLowerCase() > rows[j].cells[2].innerHTML.toLowerCase()) {
-                        min = j;
-                    }
-                }
-            }
+            min = sortTableHelper(rows, i, j, 0, min);
         }
         rows[i].parentNode.insertBefore(rows[min], rows[i]);
+    }
+}
+
+function sortTableHelper(rows, i, j, k, min){
+    if(k >= rows.length){
+        return min;
+    }else{
+        if (rows[i].cells[0].innerHTML.toLowerCase() > rows[j].cells[0].innerHTML.toLowerCase()) {
+            min = j;
+        } else if (rows[i].cells[0].innerHTML.toLowerCase() == rows[j].cells[0].innerHTML.toLowerCase()) {
+            return sortTableHelper(rows, i, j, k+1, min);
+        }
+        return min;
     }
 }
