@@ -145,16 +145,12 @@ function onLoad() {
         if (!graphAnswer.getLinks().includes(node.model) && node.model != start) {
             graphQuestion.getElements().forEach(element => {
                 if (element.attributes.type != "fsa.StartState") {
-                    let stateText = selectedState.attributes.attrs.text.text;
-                    if (stateText[0] == "{") {
-                        stateText = stateText.substr(1, stateText.length - 2);
-                    }
+                    let stateText = pruneString(selectedState.attributes.attrs.text.text);
+
                     var textSnippets = stateText.split(", ");
                     textSnippets.forEach(snip => {
-                        let snap = element.attributes.attrs.text.text;
-                        if (snap[0] == "{") {
-                            snap = snap.substr(1, snap.length - 2);
-                        }
+                        let snap = pruneString(element.attributes.attrs.text.text);
+
                         if (snap == snip) {
                             paperQuestion.findViewByModel(element).highlight(null, customHighlighter);
                         }
@@ -165,9 +161,9 @@ function onLoad() {
 
         if (node.model != startLink) {
             if (node.model.attributes.type == "standard.Link") {
-                highlightTable(graphAnswer.getCell(selectedState.source().id).attributes.attrs.text.text, selectedState.attributes.labels[0].attrs.text.text);
+                highlightTable(graphAnswer.getCell(selectedState.source().id).attributes.attrs.text.text.replace("\n", ""), selectedState.attributes.labels[0].attrs.text.text.replace("\n", ""));
             } else {
-                highlightTable(selectedState.attributes.attrs.text.text);
+                highlightTable(selectedState.attributes.attrs.text.text.replace("\n", ""));
             }
         }
 
@@ -206,10 +202,8 @@ function onLoad() {
 
         graphAnswer.getElements().forEach(element => {
             if (element != start) {
-                let snap = element.attributes.attrs.text.text;
-                if (snap[0] == "{") {
-                    snap = snap.substr(1, snap.length - 2);
-                }
+                let snap = pruneString(element.attributes.attrs.text.text);
+
                 if (snap == selectedStateQuestion.id) {
                     paperAnswer.findViewByModel(element).highlight(null, customHighlighter);
                 }
@@ -217,7 +211,7 @@ function onLoad() {
         });
 
         if (node.model.attributes.type == "standard.Link") {
-            highlightTable(selectedStateQuestion.source().id, selectedStateQuestion.attributes.labels[0].attrs.text.text);
+            highlightTable(selectedStateQuestion.source().id, selectedStateQuestion.attributes.labels[0].attrs.text.text.replace("\n", ""));
         } else {
             highlightTable(selectedStateQuestion.id);
         }
@@ -448,7 +442,7 @@ function makeStart() {
         }
         startLink = link(start, selectedState);
 
-        document.getElementById("answerStartState").innerHTML = "Startzustand: " + selectedState.attributes.attrs.text.text
+        document.getElementById("answerStartState").innerHTML = "Startzustand: " + selectedState.attributes.attrs.text.text.replace("\n", "");
     }
 }
 
@@ -461,7 +455,7 @@ function deleteState() {
     } else {
         if (selectedState != start && selectedState != startLink) {
             graphAnswer.removeCells(selectedState);
-            states.delete(selectedState.id);
+            states.delete(selectedState.attributes.attrs.text.text);
             nodes.delete(selectedState);
             if (finishStates.has(selectedState)) {
                 finishStates.delete(selectedState);
@@ -471,15 +465,15 @@ function deleteState() {
                 let table = document.getElementById("answerTransitions");
                 let rows = table.rows;
                 for (let i = 1; i < rows.length; i++) {
-                    if (graphAnswer.getCell(selectedState.source().id).attributes.attrs.text.text == rows[i].cells[0].innerHTML &&
-                        selectedState.attributes.labels[0].attrs.text.text == rows[i].cells[1].innerHTML &&
-                        graphAnswer.getCell(selectedState.target().id).attributes.attrs.text.text == rows[i].cells[2].innerHTML) {
+                    if (graphAnswer.getCell(selectedState.source().id).attributes.attrs.text.text.replace("\n", "") == rows[i].cells[0].innerHTML &&
+                        selectedState.attributes.labels[0].attrs.text.text.replace("\n", "") == rows[i].cells[1].innerHTML &&
+                        graphAnswer.getCell(selectedState.target().id).attributes.attrs.text.text.replace("\n", "") == rows[i].cells[2].innerHTML) {
                         table.deleteRow(i);
                         i--;
                     }
                 }
             } else {
-                let stateText = selectedState.attributes.attrs.text.text;
+                let stateText = selectedState.attributes.attrs.text.text.replace("\n", "");
                 let table = document.getElementById("answerStates");
                 for (let i = 0; i < table.rows[0].cells.length; i++) {
                     if (table.rows[0].cells[i].innerHTML == stateText) {
@@ -499,7 +493,7 @@ function deleteState() {
 
                 table = document.getElementById("answerEndStates");
                 for (let i = 0; i < table.rows[0].cells.length; i++) {
-                    if (selectedState.attributes.attrs.text.text == table.rows[0].cells[i].innerHTML) {
+                    if (selectedState.attributes.attrs.text.text.replace("\n", "") == table.rows[0].cells[i].innerHTML) {
                         table.rows[0].deleteCell(i);
                         i--;
                     }
@@ -524,7 +518,7 @@ function makeFinish() {
 
             let table = document.getElementById("answerEndStates");
             for (let i = 0; i < table.rows.length; i++) {
-                if (selectedState.attributes.attrs.text.text == table.rows[0].cells[i].innerHTML) {
+                if (selectedState.attributes.attrs.text.text.replace("\n", "") == table.rows[0].cells[i].innerHTML) {
                     table.rows[0].deleteCell(i);
                 }
             }
@@ -535,8 +529,8 @@ function makeFinish() {
             document.getElementById("answerEndStatesText").innerHTML = "Akzeptierende Zustände der Antwort.";
             let table = document.getElementById("answerEndStates");
             let tableCell = table.rows[0].insertCell(table.rows[0].length);
-            tableCell.innerHTML = selectedState.attributes.attrs.text.text;
-            tableCell.setAttribute("id", "answerEnd-" + selectedState.attributes.attrs.text.text);
+            tableCell.innerHTML = selectedState.attributes.attrs.text.text.replace("\n", "");
+            tableCell.setAttribute("id", "answerEnd-" + selectedState.attributes.attrs.text.text.replace("\n", ""));
         }
         finishButtonText();
     }
@@ -665,7 +659,7 @@ function loadQuestion(id) {
                     questionText: "Minimieren Sie diesen Automaten.",
                     questionFSM: {
                         start: 0,
-                        states: ["q0", "q1", "q2"],
+                        states: ["q0", "q1", "q2", "q3", "q4"],
                         ends: [1, 2],
                         transitions: [{
                             from: "q0",
@@ -674,11 +668,11 @@ function loadQuestion(id) {
                         }, {
                             from: "q0",
                             sign: "1",
-                            to: "q1"
+                            to: "q3"
                         }, {
                             from: "q1",
                             sign: "0",
-                            to: "q2"
+                            to: "q3"
                         }, {
                             from: "q1",
                             sign: "1",
@@ -690,13 +684,29 @@ function loadQuestion(id) {
                         }, {
                             from: "q2",
                             sign: "1",
-                            to: "q1"
+                            to: "q4"
+                        }, {
+                            from: "q3",
+                            sign: "0",
+                            to: "q4"
+                        }, {
+                            from: "q3",
+                            sign: "1",
+                            to: "q4"
+                        }, {
+                            from: "q4",
+                            sign: "0",
+                            to: "q3"
+                        }, {
+                            from: "q4",
+                            sign: "1",
+                            to: "q3"
                         }]
                     },
                     solutionFSM: {
                         start: 0,
-                        states: ["q0", "q1"],
-                        ends: [1],
+                        states: ["q0", "q1", "q2", "q3"],
+                        ends: [1, 2],
                         transitions: [{
                             from: "q0",
                             sign: "0",
@@ -704,15 +714,31 @@ function loadQuestion(id) {
                         }, {
                             from: "q0",
                             sign: "1",
-                            to: "q1"
+                            to: "q3"
                         }, {
                             from: "q1",
                             sign: "0",
-                            to: "q1"
+                            to: "q3"
                         }, {
                             from: "q1",
                             sign: "1",
+                            to: "q2"
+                        }, {
+                            from: "q2",
+                            sign: "0",
                             to: "q1"
+                        }, {
+                            from: "q2",
+                            sign: "1",
+                            to: "q3"
+                        }, {
+                            from: "q3",
+                            sign: "0",
+                            to: "q3"
+                        }, {
+                            from: "q3",
+                            sign: "1",
+                            to: "q3"
                         }]
                     }
                 }
@@ -1022,11 +1048,9 @@ function pushStateToSelectedBottomState(cellId) {
     if (isTransition) {
         infoTextColor("Das ausgewählte Element ist eine Transition.", "red");
     } else {
-        let snap = graphAnswer.getCell(cellId.id).attributes.attrs.text.text;
+        let snap = pruneString(graphAnswer.getCell(cellId.id).attributes.attrs.text.text);
         let saveForTable = snap;
-        if (snap[0] == "{") {
-            snap = snap.substr(1, snap.length - 2);
-        }
+
         if (snap != selectedStateQuestion.id) {
             let newText;
             newText = graphAnswer.getCell(cellId.id).attributes.attrs.text.text;
@@ -1255,6 +1279,15 @@ function adjustAll(graph) {
     });
 }
 
+function pruneString(s) {
+    let newS = s;
+    if (s[0] == "{") {
+        newS = newS.substr(1, newS.length - 2);
+    }
+    newS = newS.replace("\n", "");
+    return newS;
+}
+
 function highlightTransitions(graph, node) {
     let g1 = (graph == graphAnswer) ? graphAnswer : graphQuestion;
     let g2 = (graph == graphAnswer) ? graphQuestion : graphAnswer;
@@ -1268,18 +1301,14 @@ function highlightTransitions(graph, node) {
     }
 
     if (linkSource && linkSource != start) {
-        let sourceText = linkSource.attributes.attrs.text.text;
-        if (sourceText[0] == "{") {
-            sourceText = sourceText.substr(1, sourceText.length - 2);
-        }
+        let sourceText = pruneString(linkSource.attributes.attrs.text.text);
+
         let sourceArray = sourceText.split(', ');
         sourceArray.forEach(lbl => {
             g2.getLinks().forEach(link => {
                 if (g2.getCell(link.source().id).attributes.type != "fsa.StartState") {
-                    let otherGraphText = g2.getCell(link.source().id).attributes.attrs.text.text;
-                    if (otherGraphText[0] == "{") {
-                        otherGraphText = otherGraphText.substr(1, otherGraphText.length - 2);
-                    }
+                    let otherGraphText = pruneString(g2.getCell(link.source().id).attributes.attrs.text.text);
+
                     if (otherGraphText == lbl) {
                         switch (link.label().attrs.text.text) {
                             case "0":
@@ -1326,13 +1355,13 @@ function transitionToTable(fromState, symb, toState) {
     let row = table.insertRow(table.rows.length);
 
     let cellFrom = row.insertCell(0);
-    cellFrom.innerHTML = graphAnswer.getCell(fromState).attributes.attrs.text.text;
+    cellFrom.innerHTML = graphAnswer.getCell(fromState).attributes.attrs.text.text.replace("\n", "");
 
     let cellSign = row.insertCell(1);
     cellSign.innerHTML = symb;
 
     let cellTo = row.insertCell(2);
-    cellTo.innerHTML = graphAnswer.getCell(toState).attributes.attrs.text.text;
+    cellTo.innerHTML = graphAnswer.getCell(toState).attributes.attrs.text.text.replace("\n", "");
 
     sortTable(tableId);
 }
@@ -1367,6 +1396,7 @@ function highlightTable(fromName, sign = "01") {
     if (fromName[0] == "{") {
         fromName = fromName.substr(1, fromName.length - 2);
     }
+    fromName = fromName.replace("\n", "");
     let table = document.getElementById("answerTransitions");
     let rows = table.rows;
     for (let i = 1; i < rows.length; i++) {
@@ -1463,10 +1493,105 @@ function minimizeSet(iteration, ends, sets) {
         newButtonsDiv.id = "helpButton" + helpCounter;
         let newButton = document.createElement("button");
         newButton.onclick = function () {
-            minimizeHelpStep(iteration, endStates, sets);
+            minimizeHelpStep(iteration, [endStates], [otherStates]);
         }
-        newButton.innerHTML = "Ersten Schritt machen";
+        newButton.innerHTML = "Habe ich gemacht";
         document.getElementById("helper").appendChild(newButtonsDiv);
         newButtonsDiv.appendChild(newButton);
     }
+}
+
+function minimizeHelpStep(iteration, ends, sets) {
+    let isCorrect = true;
+    if (states.size <= 0 || finishStates.size <= 0) {
+        isCorrect = false;
+    } else {
+        states.forEach(s => {
+            let stateText = pruneString(s);
+
+            let isFinish = false;
+            finishStates.forEach(fs => {
+                let stateText2 = pruneString(fs.attributes.attrs.text.text);
+
+                if (stateText == stateText2) {
+                    isFinish = true;
+                }
+            });
+            let currentStates = new Array();
+            currentStates.push(stateText.split(", "));
+            if (isFinish) {
+                let setHas = false;
+                ends.forEach(e => {
+                    setHas = setHas || e.toString() == currentStates.toString();
+                });
+                isCorrect = isCorrect && setHas;
+            } else {
+                let setHas = false;
+                sets.forEach(e => {
+                    setHas = setHas || e.toString() == currentStates.toString();
+                });
+                isCorrect = isCorrect && setHas;
+            }
+        });
+    }
+    if (isCorrect) {
+        document.getElementById("helpButton" + helpCounter).style.display = "none";
+        if (iteration == 0) {
+            helpResponse("Sehr gut. Jetzt gilt es zu überprüfen, ob diese Mengen auch korrekt sind. " +
+                "Dazu können die Zustände links markiert werden. Wenn dann im Automaten aus der Aufgabe alle " +
+                "0 Transitionen auf die selbe Menge zeigen und alle 1 Transitionen auf die selbe Menge zeigen, " +
+                "ist die Menge minimal. Ansonsten müssen die Zustände aus der Menge, die andere Transitionen haben " +
+                "so neu zusammengefasst werden, dass alle Zustände der neuen Mengen diese Anforderungen erfüllen.<br>");
+        } else {
+
+        }
+
+        let newButtonsDiv = document.createElement("div");
+        newButtonsDiv.id = "helpButtonCheck" + helpCounter;
+        let newButton = document.createElement("button");
+        newButton.onclick = function () {
+            minimizeFurther(iteration + 1, [endStates, otherStates]);
+        }
+        newButton.innerHTML = "Habe ich gemacht";
+        document.getElementById("helper").appendChild(newButtonsDiv);
+        newButtonsDiv.appendChild(newButton);
+    } else {
+        alert("Das stimmt leider noch nicht.");
+    }
+}
+
+function minimizeFurther(iteration, sets) {
+    let newSets = new Array();
+
+    sets.forEach(s => {
+        let tempS = s;
+        while(tempE.length > 0){
+            let s1 = new Array();
+            let target0 = questionFSM.getNextState(tempS[0], 0);
+            let target1 = questionFSM.getNextState(tempS[0], 1);
+
+            let target0index = getSetIndex(sets, target0);
+            let target1index = getSetIndex(sets, target1);
+
+            s1.push(tempE.pop(0));
+            for(let i = 0; i < tempE.length; i++){
+                if(getSetIndex(questionFSM.getNextState(tempS[i], 0)) == target0index
+                && getSetIndex(questionFSM.getNextState(tempS[i], 1)) == target1index){
+                    s1.push(tempE.pop(i));
+                    i--;
+                }
+            }
+            newSets.push(s1);
+        }
+    });
+    
+}
+
+function getSetIndex(sets, elem){
+    for(let i = 0; i < sets.length; i++){
+        if(sets[i].includes(elem)){
+            return i;
+        }
+    }
+    return -1;
 }
