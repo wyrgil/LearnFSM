@@ -22,7 +22,7 @@ var paperQuestion;
 var border = 2;
 var borderActive = 4;
 
-var nodeSize = 80;
+var nodeSize = 75;
 
 var start;
 var startLink = null;
@@ -52,6 +52,8 @@ var topHints = 2.5;
 var bottomHints = 2.5;
 var hintCountTop;
 var hintCountBottom;
+
+var helpCounter = 1;
 
 /**
  * This is used to highlight corresponding states in the other paper.
@@ -479,8 +481,8 @@ function deleteState() {
             } else {
                 let stateText = selectedState.attributes.attrs.text.text;
                 let table = document.getElementById("answerStates");
-                for(let i = 0; i < table.rows[0].cells.length; i++){
-                    if(table.rows[0].cells[i].innerHTML == stateText){
+                for (let i = 0; i < table.rows[0].cells.length; i++) {
+                    if (table.rows[0].cells[i].innerHTML == stateText) {
                         table.rows[0].deleteCell(i);
                         i--;
                     }
@@ -657,7 +659,7 @@ function loadQuestion(id) {
     if (id != null) {
         //TODO: load question from db.
     } else {
-        switch (document.getElementById("questionType").innerHTML) {
+        switch (document.body.getAttribute("questiontype")) {
             case "minimize":
                 packedQuestion = {
                     questionText: "Minimieren Sie diesen Automaten.",
@@ -1381,5 +1383,80 @@ function highlightTable(fromName, sign = "01") {
             sign.includes(rows[i].cells[1].innerHTML)) {
             rows[i].classList.add("tableHighlight");
         }
+    }
+}
+
+function openHelper() {
+    document.getElementById("helper").style.display = "block";
+    document.getElementById("openHelper").style.display = "none";
+    document.getElementById("mainContent").style.marginLeft = "8%";
+    document.getElementById("mainContent").style.marginRight = "38%";
+
+}
+
+function noIdea() {
+    document.getElementById("help1").style.display = "none";
+    helpResponse("Okay, hier ein Ansatz für diesen Aufgabentyp:");
+    // let newHelpDiv = document.createElement("div");
+    // newHelpDiv.id = "helpResponse" + helpCounter++;
+    // document.getElementById("helper").appendChild(newHelpDiv);
+    // let newHelpText = "Okay, hier ein Ansatz für diesen Aufgabentyp:";
+    // newHelpDiv.innerHTML = newHelpText;
+    switch (document.body.getAttribute("questiontype")) {
+        case "minimize":
+            minimizeHelp();
+            break;
+    }
+}
+
+function helpResponse(response){
+    let newHelpDiv = document.createElement("div");
+    newHelpDiv.id = "helpResponse" + helpCounter++;
+    document.getElementById("helper").appendChild(newHelpDiv);
+    let newHelpText = response;
+    newHelpDiv.innerHTML = newHelpText;
+}
+
+function minimizeHelp() {
+    let newHelpDiv = document.createElement("div");
+    newHelpDiv.id = "help" + helpCounter;
+    document.getElementById("helper").appendChild(newHelpDiv);
+    let newHelpText = "Bei der Minimierung ist die Idee, die Zustände aus der Aufgabe so " +
+        "in Zustandsmengen zusammenzufassen, dass alle Zustände in einer Menge äquivalent sind.<br>" +
+        "Der erste Schritt hierbei ist, alle akzeptierenden und alle nichtakzeptierenden Zustände " +
+        "jeweils in einer Menge zusammenzufassen.";
+    newHelpDiv.innerHTML = newHelpText;
+    let newButtonsDiv = document.createElement("div");
+    newButtonsDiv.id = "helpButton" + helpCounter;
+    let newButton = document.createElement("button");
+    newButton.onclick = function(){
+        minimizeSet(0);
+    }
+    newButton.innerHTML = "Ersten Schritt machen";
+    document.getElementById("helper").appendChild(newButtonsDiv);
+    newButtonsDiv.appendChild(newButton);
+}
+
+function minimizeSet(iteration, sets){
+    document.getElementById("helpButton" + helpCounter).style.display = "none";
+    helpResponse("Okay, hier gibt es Hilfe für Schritt " + iteration + " bei der Mengenerstellung:");
+    if(iteration == 0){
+        let newHelpDiv = document.createElement("div");
+        newHelpDiv.id = "help" + helpCounter;
+        document.getElementById("helper").appendChild(newHelpDiv);
+        let endStates = new Array();
+        questionFSM.ends.forEach(e => {
+            endStates.push(questionFSM.states[e]);
+        });
+        let otherStates = new Array();
+        questionFSM.states.forEach(s => {
+            if(!endStates.includes(s)){
+                otherStates.push(s);
+            }
+        });
+        let newHelpText = "Die Menge mit den Zielzuständen:<br>M" + iteration + ",0 = {" + 
+        endStates + "}<br>die Menge mit den anderen Zuständen:<br>M" + iteration + ",1 = {" +
+        otherStates + "}.";
+        newHelpDiv.innerHTML = newHelpText;
     }
 }

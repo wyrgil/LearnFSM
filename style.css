@@ -101,14 +101,14 @@ tr.tableHighlight{
 }
 
 .tablesBox{
-    width: 36%;
+    width: 26%;
     float: right;
     margin-left: 4%;
     text-align: left;
 }
 
 .fsmBox {
-    width: 60%;
+    width: 70%;
     float: left;
 }
 
@@ -127,4 +127,37 @@ tr.tableHighlight{
 #infoBox{
     width: 100%;
     clear: both;
+}
+
+#mainContent{
+    margin-left: 40%;
+    margin-right: 40%;
+    width: 60%;
+    margin: auto;
+    display: block;
+}
+
+#openHelper{
+    position: absolute;
+    bottom:0;
+    right:0;
+    width: 9vw;
+    height: 16vh;
+}
+
+.sidebar{
+    background-color: white;
+
+    height: 100%;
+    width: 24%;
+    position: fixed!important;
+    overflow: auto;
+    right: 0px;
+    top: 0px;
+
+    vertical-align: top;
+}
+.sidebar div{
+    margin-left: 8px;
+    margin-top: 8px;
 }
