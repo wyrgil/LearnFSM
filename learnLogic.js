@@ -1409,7 +1409,7 @@ function noIdea() {
     }
 }
 
-function helpResponse(response){
+function helpResponse(response) {
     let newHelpDiv = document.createElement("div");
     newHelpDiv.id = "helpResponse" + helpCounter++;
     document.getElementById("helper").appendChild(newHelpDiv);
@@ -1429,7 +1429,7 @@ function minimizeHelp() {
     let newButtonsDiv = document.createElement("div");
     newButtonsDiv.id = "helpButton" + helpCounter;
     let newButton = document.createElement("button");
-    newButton.onclick = function(){
+    newButton.onclick = function () {
         minimizeSet(0);
     }
     newButton.innerHTML = "Ersten Schritt machen";
@@ -1437,10 +1437,10 @@ function minimizeHelp() {
     newButtonsDiv.appendChild(newButton);
 }
 
-function minimizeSet(iteration, sets){
+function minimizeSet(iteration, ends, sets) {
     document.getElementById("helpButton" + helpCounter).style.display = "none";
     helpResponse("Okay, hier gibt es Hilfe für Schritt " + iteration + " bei der Mengenerstellung:");
-    if(iteration == 0){
+    if (iteration == 0) {
         let newHelpDiv = document.createElement("div");
         newHelpDiv.id = "help" + helpCounter;
         document.getElementById("helper").appendChild(newHelpDiv);
@@ -1450,13 +1450,23 @@ function minimizeSet(iteration, sets){
         });
         let otherStates = new Array();
         questionFSM.states.forEach(s => {
-            if(!endStates.includes(s)){
+            if (!endStates.includes(s)) {
                 otherStates.push(s);
             }
         });
-        let newHelpText = "Die Menge mit den Zielzuständen:<br>M" + iteration + ",0 = {" + 
-        endStates + "}<br>die Menge mit den anderen Zuständen:<br>M" + iteration + ",1 = {" +
-        otherStates + "}.";
+        let newHelpText = "Die Menge mit den Zielzuständen:<br>M" + iteration + ",0 = {" +
+            endStates + "},<br>die Menge mit den anderen Zuständen:<br>M" + iteration + ",1 = {" +
+            otherStates + "}.<br>" +
+            "Am einfachsten ist es, die Mengen links als Zustände zu übernehmen.";
         newHelpDiv.innerHTML = newHelpText;
+        let newButtonsDiv = document.createElement("div");
+        newButtonsDiv.id = "helpButton" + helpCounter;
+        let newButton = document.createElement("button");
+        newButton.onclick = function () {
+            minimizeHelpStep(iteration, endStates, sets);
+        }
+        newButton.innerHTML = "Ersten Schritt machen";
+        document.getElementById("helper").appendChild(newButtonsDiv);
+        newButtonsDiv.appendChild(newButton);
     }
 }
