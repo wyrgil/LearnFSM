@@ -55,6 +55,10 @@ var hintCountBottom;
 
 var helpCounter = 1;
 
+var setSave;
+var iterationSave;
+var endSetSave;
+
 /**
  * This is used to highlight corresponding states in the other paper.
  */
@@ -1427,11 +1431,6 @@ function openHelper() {
 function noIdea() {
     document.getElementById("help1").style.display = "none";
     helpResponse("Okay, hier ein Ansatz für diesen Aufgabentyp:");
-    // let newHelpDiv = document.createElement("div");
-    // newHelpDiv.id = "helpResponse" + helpCounter++;
-    // document.getElementById("helper").appendChild(newHelpDiv);
-    // let newHelpText = "Okay, hier ein Ansatz für diesen Aufgabentyp:";
-    // newHelpDiv.innerHTML = newHelpText;
     switch (document.body.getAttribute("questiontype")) {
         case "minimize":
             minimizeHelp();
@@ -1467,8 +1466,12 @@ function minimizeHelp() {
     newButtonsDiv.appendChild(newButton);
 }
 
-function minimizeSet(iteration, ends, sets) {
-    document.getElementById("helpButton" + helpCounter).style.display = "none";
+function minimizeSet(iteration, sets) {
+    if (document.getElementById("helpButton" + helpCounter)) {
+        document.getElementById("helpButton" + helpCounter).style.display = "none";
+    }else if(document.getElementById("helpButtonDiv" + helpCounter)){
+        document.getElementById("helpButtonDiv" + helpCounter).style.display = "none";
+    }
     helpResponse("Okay, hier gibt es Hilfe für Schritt " + iteration + " bei der Mengenerstellung:");
     if (iteration == 0) {
         let newHelpDiv = document.createElement("div");
@@ -1492,12 +1495,27 @@ function minimizeSet(iteration, ends, sets) {
         let newButtonsDiv = document.createElement("div");
         newButtonsDiv.id = "helpButton" + helpCounter;
         let newButton = document.createElement("button");
+        iterationSave = iteration;
+        endSetSave = endStates;
+        setSave = otherStates;
         newButton.onclick = function () {
-            minimizeHelpStep(iteration, [endStates], [otherStates]);
+            minimizeHelpStep(iterationSave, [endSetSave], [setSave]);
         }
         newButton.innerHTML = "Habe ich gemacht";
         document.getElementById("helper").appendChild(newButtonsDiv);
         newButtonsDiv.appendChild(newButton);
+    } else {
+        let newHelpDiv = document.createElement("div");
+        newHelpDiv.id = "help" + helpCounter;
+        document.getElementById("helper").appendChild(newHelpDiv);
+        let newHelpText = "Die Mengen mit den Zuständen sehen jetzt so aus:<br>";
+
+        let minimizedSet = minimizeFurther(sets);
+        for (let i = 0; i < minimizedSet.length; i++) {
+            newHelpText += "M" + iteration + "," + i + " = {" +
+                minimizeFurther(sets).toString() + "}" + ((i == minimizedSet.length - 1) ? "" : ",") + "<br>";
+        }
+        newHelpDiv.innerHTML = newHelpText;
     }
 }
 
@@ -1510,13 +1528,15 @@ function minimizeHelpStep(iteration, ends, sets) {
             let stateText = pruneString(s);
 
             let isFinish = false;
-            finishStates.forEach(fs => {
-                let stateText2 = pruneString(fs.attributes.attrs.text.text);
+            if (iteration == 0) {
+                finishStates.forEach(fs => {
+                    let stateText2 = pruneString(fs.attributes.attrs.text.text);
 
-                if (stateText == stateText2) {
-                    isFinish = true;
-                }
-            });
+                    if (stateText == stateText2) {
+                        isFinish = true;
+                    }
+                });
+            }
             let currentStates = new Array();
             currentStates.push(stateText.split(", "));
             if (isFinish) {
@@ -1543,16 +1563,33 @@ function minimizeHelpStep(iteration, ends, sets) {
                 "ist die Menge minimal. Ansonsten müssen die Zustände aus der Menge, die andere Transitionen haben " +
                 "so neu zusammengefasst werden, dass alle Zustände der neuen Mengen diese Anforderungen erfüllen.<br>");
         } else {
-
+            helpResponse("Das stimmt. Dieses Vorgehen einfach so lange wiederholen, bis sich die Mengen der Zustände " +
+                "nicht mehr ändern.");
         }
 
         let newButtonsDiv = document.createElement("div");
-        newButtonsDiv.id = "helpButtonCheck" + helpCounter;
+        newButtonsDiv.id = "helpButtonDiv" + helpCounter;
         let newButton = document.createElement("button");
+        if(iteration == 0){
+            setSave = [endStates, otherStates];
+        }else{
+            setSave = otherStates;
+        }
         newButton.onclick = function () {
-            minimizeFurther(iteration + 1, [endStates, otherStates]);
+            let newSet = minimizeFurther(setSave);
+
         }
         newButton.innerHTML = "Habe ich gemacht";
+        document.getElementById("helper").appendChild(newButtonsDiv);
+        newButtonsDiv.appendChild(newButton);
+
+        newButton = document.createElement("button");
+        iterationSave = iteration;
+        setSave = sets;
+        newButton.onclick = function () {
+            minimizeSet(iterationSave + 1, setSave);
+        }
+        newButton.innerHTML = "Ich brauche Hilfe";
         document.getElementById("helper").appendChild(newButtonsDiv);
         newButtonsDiv.appendChild(newButton);
     } else {
@@ -1560,12 +1597,12 @@ function minimizeHelpStep(iteration, ends, sets) {
     }
 }
 
-function minimizeFurther(iteration, sets) {
+function minimizeFurther(sets) {
     let newSets = new Array();
 
     sets.forEach(s => {
         let tempS = s;
-        while(tempE.length > 0){
+        while (tempS.length > 0) {
             let s1 = new Array();
             let target0 = questionFSM.getNextState(tempS[0], 0);
             let target1 = questionFSM.getNextState(tempS[0], 1);
@@ -1573,25 +1610,41 @@ function minimizeFurther(iteration, sets) {
             let target0index = getSetIndex(sets, target0);
             let target1index = getSetIndex(sets, target1);
 
-            s1.push(tempE.pop(0));
-            for(let i = 0; i < tempE.length; i++){
-                if(getSetIndex(questionFSM.getNextState(tempS[i], 0)) == target0index
-                && getSetIndex(questionFSM.getNextState(tempS[i], 1)) == target1index){
-                    s1.push(tempE.pop(i));
+            s1.push(tempS.pop(0));
+            for (let i = 0; i < tempS.length; i++) {
+                if (getSetIndex(questionFSM.getNextState(tempS[i], 0)) == target0index &&
+                    getSetIndex(questionFSM.getNextState(tempS[i], 1)) == target1index) {
+                    s1.push(tempS.pop(i));
                     i--;
                 }
             }
             newSets.push(s1);
         }
     });
-    
+
+    return newSets;
 }
 
-function getSetIndex(sets, elem){
-    for(let i = 0; i < sets.length; i++){
-        if(sets[i].includes(elem)){
+function getSetIndex(sets, elem) {
+    for (let i = 0; i < sets.length; i++) {
+        if (sets[i].includes(elem)) {
             return i;
         }
     }
-    return -1;
+    return null;
+}
+
+function quickArrayCompare(arr1, arr2) {
+    var result = false;
+    if (arr1.length != arr2.length) {
+        return false;
+    }
+    var i = 0;
+    if (arr1 && arr2) {
+        result = true;
+        for (i; i < arr1.length && result; i++) {
+            result = (arr1[i] == arr2[i]);
+        }
+    }
+    return result;
 }
