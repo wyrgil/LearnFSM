@@ -148,6 +148,8 @@ function onLoad() {
         finishButtonText();
         deleteButtonText();
 
+        highlightSets();
+
         unhighlightQuestion(customHighlighter);
 
         if (!graphAnswer.getLinks().includes(node.model) && node.model != start) {
@@ -240,8 +242,25 @@ function onLoad() {
         updateSelfLoops(graphAnswer);
     });
 
+    unhighlightSets();
+
     hintCountTop = 0;
     hintCountBottom = 0;
+
+    topHints = 2.5;
+    bottomHints = 2.5;
+    hintCountTop = null;
+    hintCountBottom = null;
+
+    helpCounter = 1;
+
+    setSave = null;
+    iterationSave = 0;
+    endSetSave = null;
+
+    setsThatRemain = null;
+    setsThatRemainIndices0 = null;
+    setsThatRemainIndices1 = null;
 }
 
 /**
@@ -1065,7 +1084,8 @@ function pushStateToSelectedBottomState(cellId) {
             if (states.has(newText)) {
                 states.delete(newText);
             }
-            newText = newText.substr(1, newText.length - 2);
+
+            newText = pruneString(newText);
             newText += ", " + selectedStateQuestion.id;
             if ((splitText = newText.split(", ")).length > 2) {
                 for (var i = 2; i < splitText.length; i += 2) {
@@ -1082,7 +1102,7 @@ function pushStateToSelectedBottomState(cellId) {
             let table = document.getElementById("answerTransitions");
             let rows = table.rows;
             for (let i = 1; i < rows.length; i++) {
-                let snop = rows[i].cells[0].innerHTML;
+                let snop = pruneString(rows[i].cells[0].innerHTML);
                 if (saveForTable == snop) {
                     rows[i].cells[0].innerHTML = newText.replace("\n", "");
                 }
@@ -1095,7 +1115,15 @@ function pushStateToSelectedBottomState(cellId) {
 
             table = document.getElementById("answerStates");
             for (let i = 0; i < table.rows[0].cells.length; i++) {
-                let snop = table.rows[0].cells[i].innerHTML;
+                let snop = pruneString(table.rows[0].cells[i].innerHTML);
+                if (saveForTable == snop) {
+                    table.rows[0].cells[i].innerHTML = newText.replace("\n", "");
+                }
+            }
+
+            table = document.getElementById("answerEndStates");
+            for (let i = 0; i < table.rows[0].cells.length; i++) {
+                let snop = pruneString(table.rows[0].cells[i].innerHTML);
                 if (saveForTable == snop) {
                     table.rows[0].cells[i].innerHTML = newText.replace("\n", "");
                 }
@@ -1317,19 +1345,23 @@ function highlightTransitions(graph, node) {
                 if (g2.getCell(link.source().id).attributes.type != "fsa.StartState") {
                     let otherGraphText = pruneString(g2.getCell(link.source().id).attributes.attrs.text.text);
 
-                    if (otherGraphText == lbl) {
-                        switch (link.label().attrs.text.text) {
-                            case "0":
-                                link.attr('line/stroke', 'red');
-                                break;
-                            case "1":
-                                link.attr("line/stroke", 'blue');
-                                break;
-                            default:
-                                link.attr("line/stroke", 'magenta');
-                                break;
+                    let otherGraphTextArray = otherGraphText.split(", ");
+                    for (let i = 0; i < otherGraphTextArray.length; i++) {
+                        if (otherGraphTextArray[i] == lbl) {
+                            switch (link.label().attrs.text.text) {
+                                case "0":
+                                    link.attr('line/stroke', 'red');
+                                    break;
+                                case "1":
+                                    link.attr("line/stroke", 'blue');
+                                    break;
+                                default:
+                                    link.attr("line/stroke", 'magenta');
+                                    break;
+                            }
                         }
                     }
+
                 }
             });
         });
@@ -1417,9 +1449,12 @@ function highlightTable(fromName, sign = "01") {
     table = document.getElementById("questionTransitions");
     rows = table.rows;
     for (let i = 1; i < rows.length; i++) {
-        if (rows[i].cells[0].innerHTML.includes(fromName) &&
-            sign.includes(rows[i].cells[1].innerHTML)) {
-            rows[i].classList.add("tableHighlight");
+        let splitText = fromName.split(", ");
+        for (let j = 0; j < splitText.length; j++) {
+            if (rows[i].cells[0].innerHTML.includes(splitText[j]) &&
+                sign.includes(rows[i].cells[1].innerHTML)) {
+                rows[i].classList.add("tableHighlight");
+            }
         }
     }
 }
@@ -1438,6 +1473,9 @@ function noIdea() {
     switch (document.body.getAttribute("questiontype")) {
         case "minimize":
             minimizeHelp();
+            break;
+        case "ndet":
+            ndetHelp();
             break;
     }
 }
@@ -1496,7 +1534,8 @@ function minimizeSet() {
         let newHelpText = "Die Menge mit den Zielzuständen:<br>M" + iteration + ",0 = {" +
             endStates + "},<br>die Menge mit den anderen Zuständen:<br>M" + iteration + ",1 = {" +
             otherStates + "}.<br>" +
-            "Am einfachsten ist es, die Mengen links als Zustände zu übernehmen.";
+            "Am einfachsten ist es, die Mengen links als Zustände zu übernehmen und die Menge mit den " +
+            "Zielzuständen als Zielzustand zu markieren.";
         newHelpDiv.innerHTML = newHelpText;
         let newButtonsDiv = document.createElement("div");
         newButtonsDiv.id = "helpButton" + helpCounter;
@@ -1558,9 +1597,9 @@ function minimizeSet() {
             document.getElementById("helper").appendChild(newButtonsDiv);
             newButtonsDiv.appendChild(newButton);
 
-        }else{
+        } else {
             newHelpText += "<br>Die Mengen haben sich im vergleich zum vorherigen Schritt nicht verändert, das bedeutet, der Automat ist jetzt minimal.<br>" +
-            "Es müssen nur noch die Transitionen eingezeichnet werden, dann ist die Aufgabe abgeschlossen.";
+                "Es müssen nur noch die Transitionen eingezeichnet werden, dann ist die Aufgabe abgeschlossen.";
 
             newHelpDiv.innerHTML = newHelpText;
         }
@@ -1611,7 +1650,7 @@ function minimizeHelpStep() {
             helpResponse("Sehr gut. Jetzt gilt es zu überprüfen, ob diese Mengen auch korrekt sind. " +
                 "Dazu können die Zustände links markiert werden. Wenn dann im Automaten aus der Aufgabe alle " +
                 "0 Transitionen auf die selbe Menge zeigen und alle 1 Transitionen auf die selbe Menge zeigen, " +
-                "ist die Menge minimal. Ansonsten müssen die Zustände aus der Menge, die andere Transitionen haben " +
+                "ist die Menge minimal. Ansonsten müssen die Zustände aus der Menge, die andere Transitionen haben, " +
                 "so neu zusammengefasst werden, dass alle Zustände der neuen Mengen diese Anforderungen erfüllen.<br>");
         } else {
             helpResponse("Das stimmt. Dieses Vorgehen einfach so lange wiederholen, bis sich die Mengen der Zustände " +
@@ -1627,10 +1666,10 @@ function minimizeHelpStep() {
             setSave = sets;
         }
         newButton.onclick = function () {
-            let newSet = minimizeFurther(setSave);
+            checkMinimizeCorrect();
             //TODO:
         }
-        newButton.innerHTML = "Habe ich gemacht";
+        newButton.innerHTML = "Ich habe den nächsten Schritt gemacht";
         document.getElementById("helper").appendChild(newButtonsDiv);
         newButtonsDiv.appendChild(newButton);
 
@@ -1668,7 +1707,7 @@ function minimizeFurther() {
             s1.push(tempS.shift());
 
             let multiplePushed = new Array();
-            multiplePushed.push(tempS[0]);
+            multiplePushed.push(s1[0]);
             for (let i = 0; i < tempS.length; i++) {
                 if (getSetIndex(sets, questionFSM.getNextState(tempS[i], 0)) == target0index &&
                     getSetIndex(sets, questionFSM.getNextState(tempS[i], 1)) == target1index) {
@@ -1726,4 +1765,105 @@ function setCompare(set1, set2) {
         }
     }
     return result;
+}
+
+function checkMinimizeCorrect() {
+    let newSet = minimizeFurther(setSave);
+
+    if (setCompare(newSet, setSave)) {
+        hideHelpButtons();
+        helpResponse("Die Mengen haben sich im vergleich zum vorherigen Schritt nicht verändert, das bedeutet, der Automat ist jetzt minimal.<br>" +
+            "Es müssen nur noch die Transitionen eingezeichnet werden, dann ist die Aufgabe abgeschlossen.");
+    } else {
+
+        let iteration = iterationSave;
+        let isCorrect = true;
+        let currentStates = null;
+        if (states.size <= 0) {
+            isCorrect = false;
+        } else {
+            states.forEach(s => {
+                let stateText = pruneString(s);
+
+                currentStates = new Array();
+                currentStates.push(stateText.split(", "));
+
+                let setHas = false;
+                newSet.forEach(e => {
+                    setHas = setHas || e.sort().toString() == currentStates.sort().toString();
+                });
+                isCorrect = isCorrect && setHas;
+            });
+        }
+        if (isCorrect) {
+            hideHelpButtons();
+
+            let newHelpText = "Das ist korrekt.<br>Die Mengen in Schritt " + iteration + " sind also folgende:<br>";
+            for (let i = 0; i < newSet.length; i++) {
+                newHelpText += "M" + iteration + "," + i + " = {" +
+                    newSet[i].toString() + "}" + ((i == newSet.length - 1) ? "" : ",") + "<br>";
+            }
+            newHelpText += "Jetzt einfach mit diesem Verfahren weitermachen.";
+            helpResponse(newHelpText);
+
+            let newButtonsDiv = document.createElement("div");
+            newButtonsDiv.id = "helpButtonDiv" + helpCounter;
+            let newButton = document.createElement("button");
+            setSave = newSet;
+            newButton.onclick = function () {
+                checkMinimizeCorrect();
+            }
+            newButton.innerHTML = "Ich habe den nächsten Schritt gemacht";
+            document.getElementById("helper").appendChild(newButtonsDiv);
+            newButtonsDiv.appendChild(newButton);
+
+            newButton = document.createElement("button");
+            iterationSave++;
+            newButton.onclick = function () {
+                minimizeSet();
+            }
+            newButton.innerHTML = "Ich brauche Hilfe";
+            document.getElementById("helper").appendChild(newButtonsDiv);
+            newButtonsDiv.appendChild(newButton);
+
+        } else {
+            alert("Das sind noch nicht alle Zustandsmengen.");
+        }
+    }
+}
+
+function hideHelpButtons() {
+    if (document.getElementById("helpButton" + helpCounter)) {
+        document.getElementById("helpButton" + helpCounter).style.display = "none";
+    } else if (document.getElementById("helpButtonDiv" + helpCounter)) {
+        document.getElementById("helpButtonDiv" + helpCounter).style.display = "none";
+    }
+}
+
+function highlightSets() {
+    //TODO: highlight sets for both graphs in different colors if minimize question
+}
+
+function unhighlightSets() {
+    //TODO: unhighlight different colors for both graphs if minimizequestion
+}
+
+function ndetHelp() {
+    let newHelpDiv = document.createElement("div");
+    newHelpDiv.id = "help" + helpCounter;
+    document.getElementById("helper").appendChild(newHelpDiv);
+    let newHelpText = "Bei der Minimierung ist die Idee, die Zustände aus der Aufgabe so " +
+        "in Zustandsmengen zusammenzufassen, dass alle Zustände in einer Menge äquivalent sind.<br>" +
+        "Der erste Schritt hierbei ist, alle akzeptierenden und alle nichtakzeptierenden Zustände " +
+        "jeweils in einer Menge zusammenzufassen.";
+    newHelpDiv.innerHTML = newHelpText;
+    let newButtonsDiv = document.createElement("div");
+    newButtonsDiv.id = "helpButton" + helpCounter;
+    let newButton = document.createElement("button");
+    newButton.onclick = function () {
+        minimizeSet(0);
+    }
+    newButton.innerHTML = "Ersten Schritt machen";
+    document.getElementById("helper").appendChild(newButtonsDiv);
+    newButtonsDiv.appendChild(newButton);
 }
