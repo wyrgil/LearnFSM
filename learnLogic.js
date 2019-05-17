@@ -56,8 +56,12 @@ var hintCountBottom;
 var helpCounter = 1;
 
 var setSave;
-var iterationSave;
+var iterationSave = 0;
 var endSetSave;
+
+var setsThatRemain;
+var setsThatRemainIndices0;
+var setsThatRemainIndices1;
 
 /**
  * This is used to highlight corresponding states in the other paper.
@@ -1466,10 +1470,12 @@ function minimizeHelp() {
     newButtonsDiv.appendChild(newButton);
 }
 
-function minimizeSet(iteration, sets) {
+function minimizeSet() {
+    let iteration = iterationSave;
+    let sets = setSave;
     if (document.getElementById("helpButton" + helpCounter)) {
         document.getElementById("helpButton" + helpCounter).style.display = "none";
-    }else if(document.getElementById("helpButtonDiv" + helpCounter)){
+    } else if (document.getElementById("helpButtonDiv" + helpCounter)) {
         document.getElementById("helpButtonDiv" + helpCounter).style.display = "none";
     }
     helpResponse("Okay, hier gibt es Hilfe für Schritt " + iteration + " bei der Mengenerstellung:");
@@ -1495,11 +1501,11 @@ function minimizeSet(iteration, sets) {
         let newButtonsDiv = document.createElement("div");
         newButtonsDiv.id = "helpButton" + helpCounter;
         let newButton = document.createElement("button");
-        iterationSave = iteration;
-        endSetSave = endStates;
-        setSave = otherStates;
+        
+        endSetSave = [endStates];
+        setSave = [otherStates];
         newButton.onclick = function () {
-            minimizeHelpStep(iterationSave, [endSetSave], [setSave]);
+            minimizeHelpStep();
         }
         newButton.innerHTML = "Habe ich gemacht";
         document.getElementById("helper").appendChild(newButtonsDiv);
@@ -1513,13 +1519,16 @@ function minimizeSet(iteration, sets) {
         let minimizedSet = minimizeFurther(sets);
         for (let i = 0; i < minimizedSet.length; i++) {
             newHelpText += "M" + iteration + "," + i + " = {" +
-                minimizeFurther(sets).toString() + "}" + ((i == minimizedSet.length - 1) ? "" : ",") + "<br>";
+                minimizedSet[i].toString() + "}" + ((i == minimizedSet.length - 1) ? "" : ",") + "<br>";
         }
         newHelpDiv.innerHTML = newHelpText;
     }
 }
 
-function minimizeHelpStep(iteration, ends, sets) {
+function minimizeHelpStep() {
+    let iteration = iterationSave;
+    let ends = endSetSave;
+    let sets = setSave;
     let isCorrect = true;
     if (states.size <= 0 || finishStates.size <= 0) {
         isCorrect = false;
@@ -1570,24 +1579,23 @@ function minimizeHelpStep(iteration, ends, sets) {
         let newButtonsDiv = document.createElement("div");
         newButtonsDiv.id = "helpButtonDiv" + helpCounter;
         let newButton = document.createElement("button");
-        if(iteration == 0){
-            setSave = [endStates, otherStates];
-        }else{
-            setSave = otherStates;
+        if (iteration == 0) {
+            setSave = ends.concat(sets);
+        } else {
+            setSave = sets;
         }
         newButton.onclick = function () {
             let newSet = minimizeFurther(setSave);
-
+            //TODO:
         }
         newButton.innerHTML = "Habe ich gemacht";
         document.getElementById("helper").appendChild(newButtonsDiv);
         newButtonsDiv.appendChild(newButton);
 
         newButton = document.createElement("button");
-        iterationSave = iteration;
-        setSave = sets;
+        iterationSave++;
         newButton.onclick = function () {
-            minimizeSet(iterationSave + 1, setSave);
+            minimizeSet();
         }
         newButton.innerHTML = "Ich brauche Hilfe";
         document.getElementById("helper").appendChild(newButtonsDiv);
@@ -1597,11 +1605,16 @@ function minimizeHelpStep(iteration, ends, sets) {
     }
 }
 
-function minimizeFurther(sets) {
+function minimizeFurther() {
+    let sets = [...setSave];
     let newSets = new Array();
 
+    setsThatRemain = new Array();
+    setsThatRemainIndices0 = new Array();
+    setsThatRemainIndices1 = new Array();
+
     sets.forEach(s => {
-        let tempS = s;
+        let tempS = [...s];
         while (tempS.length > 0) {
             let s1 = new Array();
             let target0 = questionFSM.getNextState(tempS[0], 0);
@@ -1610,13 +1623,24 @@ function minimizeFurther(sets) {
             let target0index = getSetIndex(sets, target0);
             let target1index = getSetIndex(sets, target1);
 
-            s1.push(tempS.pop(0));
+            s1.push(tempS.shift());
+
+            let multiplePushed = new Array();
+            multiplePushed.push(tempS[0]);
             for (let i = 0; i < tempS.length; i++) {
-                if (getSetIndex(questionFSM.getNextState(tempS[i], 0)) == target0index &&
-                    getSetIndex(questionFSM.getNextState(tempS[i], 1)) == target1index) {
+                if (getSetIndex(sets, questionFSM.getNextState(tempS[i], 0)) == target0index &&
+                    getSetIndex(sets, questionFSM.getNextState(tempS[i], 1)) == target1index) {
                     s1.push(tempS.pop(i));
                     i--;
+                    if(multiplePushed.length > 0){
+                        multiplePushed.push(s1[s1.length - 1]);
+                    }
                 }
+            }
+            if(multiplePushed.length > 1){
+                setsThatRemain.push(multiplePushed);
+                setsThatRemainIndices0.push(target0index);
+                setsThatRemainIndices1.push(target1index);
             }
             newSets.push(s1);
         }
