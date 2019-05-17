@@ -67,6 +67,11 @@ class FSM {
      * @param {FSM} fsm : FSM to compare
      */
     equivalence(fsm) {
+        let correctness = this.isCorrect();
+        if(correctness != 0){
+            return "Ungültiger Automat: " + correctness;
+        }
+
         let result = 0;
         let mapper = new Map();
         mapper.set(this.states[this.start], fsm.states[fsm.start]);
@@ -94,7 +99,7 @@ class FSM {
                     if (add) {
                         transitions.push([qt, qf]);
                     }
-                }else{
+                } else {
                     result = "Es fehlen noch Zustände";
                 }
             });
@@ -118,6 +123,41 @@ class FSM {
         }
 
         return result;
+    }
+
+    isCorrect() {
+        let correct = true;
+
+        if (this.start && (this.start >= this.states.length || this.start < 0)) {
+            return "Kein oder falscher Startzustand.";
+        }
+
+        for(let i = 0; i < this.ends.length; i++){
+            if (this.ends[i] >= this.states.length || this.ends[i] < 0) {
+                return "Falsche Startzustände.";
+            }
+        }
+
+        for (let i = 0; i < this.states.length; i++) {
+            let has0Transition = false;
+            let has1Transition = false;
+            for (let j = 0; j < this.transitions.length; j++) {
+                if (this.transitions[j].from == this.states[i] &&
+                    this.transitions[j].sing == "0") {
+                    has0Transition = has0Transition || true;
+                }
+                if (this.transitions[j].from == this.states[i] &&
+                    this.transitions[j].sing == "1") {
+                    has1Transition = has1Transition || true;
+                }
+            }
+            correct = correct && has0Transition && has1Transition;
+            if(!correct){
+                return "Fehlende Transitionen.";
+            }
+        }
+
+        return 0;
     }
 
     /**
@@ -148,19 +188,19 @@ class FSM {
         }
 
         let light = this.equivalence(fsm);
-        if(light != 0){
+        if (light != 0) {
             return light;
         }
 
         if (this.states.length > fsm.states.length) {
             return "Der Automat hat zu viele Zustände.";
         }
-        
+
         if (this.transitions.length > fsm.transitions.length ||
             this.transitions.length > this.states.length * 2) {
             return "Der Automat hat zu viele Transitionen";
         }
-        
+
         if (this.ends.length > fsm.ends.length) {
             return "Der Automat hat zu viele akzeptierende Zustände.";
         }
@@ -264,7 +304,7 @@ class FSM {
  */
 function arrayCompare(arr1, arr2) {
     var result = false;
-    if(arr1.length != arr2.length){
+    if (arr1.length != arr2.length) {
         return false;
     }
     var i = 0;

@@ -80,6 +80,7 @@ var statesVisited = new Array();
 var arrayIterator = 0;
 var lastState;
 var lastTargets = new Array();
+var lastTargetsOld = new Array();
 
 /**
  * This is used to highlight corresponding states in the other paper.
@@ -805,6 +806,18 @@ function loadQuestion(id) {
                             to: "q0"
                         }, {
                             from: "q0",
+                            sign: "1",
+                            to: "q1"
+                        }, {
+                            from: "q1",
+                            sign: "0",
+                            to: "q0"
+                        }, {
+                            from: "q1",
+                            sign: "1",
+                            to: "q0"
+                        }, {
+                            from: "q1",
                             sign: "1",
                             to: "q1"
                         }]
@@ -1910,7 +1923,7 @@ function ndetNewStates() {
             alert("Es gibt noch keinen Startzustand.");
         } else {
             let stateText = pruneString(startState.attributes.attrs.text.text);
-            if (states.size == 1 && stateText == questionFSM.states[questionFSM.start]) {
+            if (states.size >= 1 && stateText == questionFSM.states[questionFSM.start]) {
                 hideHelpButtons();
                 let newHelpText = "Sehr gut. Als nächstes muss man sich die Transitionen des " +
                     "Startzustands in der Aufgabe betrachten. Er hat hier 0-Transitionen nach ";
@@ -1944,6 +1957,8 @@ function ndetNewStates() {
                     targets1.toString() + "}.";
                 targetStatesOld.push(targets0);
                 targetStatesOld.push(targets1);
+                lastTargetsOld[0] = [...[targets0]];
+                lastTargetsOld[1] = [...[targets1]];
                 iterationSave++;
                 helpResponse(newHelpText);
 
@@ -1964,42 +1979,64 @@ function ndetNewStates() {
             }
         }
     } else {
-        let stateText = targetStatesOld[0];
-        lastState = stateText;
-        let newHelpText = "Der Zustand " + stateText + "hat hier 0-Transitionen nach ";
-        let moreThanOne = false;
-        let targets0 = new Array();
-        let targets1 = new Array();
-        for (let i = 0; i < questionFSM.transitions.length; i++) {
-            let trans = questionFSM.transitions[i];
-            if (trans.from == stateText && trans.sign == 0) {
-                newHelpText += (moreThanOne ? ", " : " ");
-                newHelpText += trans.to;
-                targets0.push(trans.to);
-                moreThanOne = true;
+        hideHelpButtons();
+        if (answerToFSM().equivalence(solutionFSM) == 0) {
+            hideHelpButtons();
+            helpResponse("Sehr gut.<br>Alle Zustände wurden abgearbeitet und der Automat wurde " +
+                "erfolgreich in einen deterministischen überführt.");
+        } else {
+            let stateText = targetStatesOld[0];
+            lastState = stateText;
+            let newHelpText = "Der Zustand " + stateText + "hat hier 0-Transitionen nach {";
+            let moreThanOne = false;
+            let targets0 = new Array();
+            let targets1 = new Array();
+            for (let i = 0; i < questionFSM.transitions.length; i++) {
+                let trans = questionFSM.transitions[i];
+                if (trans.from == stateText && trans.sign == 0) {
+                    newHelpText += (moreThanOne ? ", " : " ");
+                    newHelpText += trans.to;
+                    targets0.push(trans.to);
+                    moreThanOne = true;
+                }
             }
-        }
-        moreThanOne = false;
-        newHelpText += " und 1-Transitionen nach ";
-        for (let i = 0; i < questionFSM.transitions.length; i++) {
-            let trans = questionFSM.transitions[i];
-            if (trans.from == stateText && trans.sign == 1) {
-                newHelpText += (moreThanOne ? ", " : " ");
-                newHelpText += trans.to;
-                targets1.push(trans.to);
-                moreThanOne = true;
+            moreThanOne = false;
+            newHelpText += "} und 1-Transitionen nach {";
+            for (let i = 0; i < questionFSM.transitions.length; i++) {
+                let trans = questionFSM.transitions[i];
+                if (trans.from == stateText && trans.sign == 1) {
+                    newHelpText += (moreThanOne ? ", " : " ");
+                    newHelpText += trans.to;
+                    targets1.push(trans.to);
+                    moreThanOne = true;
+                }
             }
+            newHelpText += "}.<br>" +
+                "Also müssen jetzt alle Zustände auf die eine 0-Transition zeigt und alle Zustände auf " +
+                "die eine 1-Transition zeigt in jeweils eine Zustandsmenge zusammengefasst werden, " +
+                "also für 0 in die Menge {" + targets0.toString() + "} und für 1 in die Menge {" +
+                targets1.toString() + "}.";
+            targetStates.push(targets0);
+            targetStates.push(targets1);
+            lastTargetsOld[0] = [...[targets0]];
+            lastTargetsOld[1] = [...[targets1]];
+            iterationSave++;
+
+            helpResponse(newHelpText);
+
+            lastState = stateText;
+
+            let newButtonsDiv = document.createElement("div");
+            newButtonsDiv.id = "helpButton" + helpCounter;
+            let newButton = document.createElement("button");
+
+            newButton.onclick = function () {
+                ndetNewStates2();
+            }
+            newButton.innerHTML = "Habe ich gemacht";
+            document.getElementById("helper").appendChild(newButtonsDiv);
+            newButtonsDiv.appendChild(newButton);
         }
-        newHelpText += ".<br>" +
-            "Also müssen jetzt alle Zustände auf die eine 0-Transition zeigt und alle Zustände auf " +
-            "die eine 1-Transition zeigt in jeweils eine Zustandsmenge zusammengefasst werden, " +
-            "also für 0 in die Menge {" + targets0.toString() + "} und für 1 in die Menge {" +
-            targets1.toString() + "}.";
-        targetStates.push(targets0);
-        targetStates.push(targets1);
-        lastTargets[0] = targets0;
-        lastTargets[1] = targets1;
-        iterationSave++;
     }
 }
 
@@ -2007,23 +2044,35 @@ function ndetNewTransitions() {
     let isCorrect0 = false;
     let isCorrect1 = false;
     graphAnswer.getLinks().forEach(link => {
-        if (link.attributes.type != "fsa.StartState" && link.attributes.labels[0].attrs.text.text == "0") {
-            if (pruneString(graphAnswer.getCell(link.source().id).attributes.attrs.text.text) == lastState &&
-                (pruneString(graphAnswer.getCell(link.target().id).attributes.attrs.text.text) == lastTargets[0])) {
-                    isCorrect0 = true;
+        if (link.attributes.type != "fsa.StartState" && link.attributes.labels[0].attrs.text.text.includes("0")) {
+            if (pruneString(graphAnswer.getCell(link.source().id).attributes.attrs.text.text).split(", ").sort().toString() == lastState.toString() &&
+                (pruneString(graphAnswer.getCell(link.target().id).attributes.attrs.text.text).split(", ").sort().toString() == lastTargetsOld[0].toString())) {
+                isCorrect0 = true;
             }
         }
-        if (link.attributes.type != "fsa.StartState" && link.attributes.labels[0].attrs.text.text == "1") {
-            if (pruneString(graphAnswer.getCell(link.source().id).attributes.attrs.text.text) == lastState &&
-                (pruneString(graphAnswer.getCell(link.target().id).attributes.attrs.text.text) == lastTargets[1])) {
-                    isCorrect0 = true;
+        if (link.attributes.type != "fsa.StartState" && link.attributes.labels[0].attrs.text.text.includes("1")) {
+            if (pruneString(graphAnswer.getCell(link.source().id).attributes.attrs.text.text).split(", ").sort().toString() == lastState.toString() &&
+                (pruneString(graphAnswer.getCell(link.target().id).attributes.attrs.text.text).split(", ").sort().toString() == lastTargetsOld[1].toString())) {
+                isCorrect1 = true;
             }
         }
     });
 
-    if (isCorrect) {
+    if (isCorrect0 && isCorrect1) {
+        hideHelpButtons();
+
+        targetStatesOld.shift();
+        lastTargetsOld.shift();
+
+        if (targetStatesOld.length <= 0) {
+            targetStatesOld = [...targetStates];
+            targetStates = new Array();
+            lastTargetsOld = [...lastTargets];
+            lastTargets = new Array();
+        }
+
         newHelpText = "Sehr gut. Als nächstes macht man mit einem der neuen Zustände das gleiche.<br>" +
-            "Beginnen wir mit " + targetStatesOld[0] + ".";
+            "Beginnen wir mit {" + targetStatesOld[0] + "}.";
         helpResponse(newHelpText);
 
         let newButtonsDiv = document.createElement("div");
@@ -2036,26 +2085,34 @@ function ndetNewTransitions() {
         newButton.innerHTML = "Okay";
         document.getElementById("helper").appendChild(newButtonsDiv);
         newButtonsDiv.appendChild(newButton);
+    } else if (!isCorrect0 && !isCorrect1) {
+        alert("Es fehlen noch beide Transitionen.");
+    } else if (!isCorrect0) {
+        alert("Es fehlt noch die 0-Transition.")
+    } else if (!isCorrect1) {
+        alert("Es fehlt noch die 1-Transition.");
     }
 }
 
 
 function ndetNewStates2() {
     let isCorrect = true;
-    for (let i = 0; i < targetStates.length; i++) {
+    for (let i = 0; i < targetStatesOld.length; i++) {
         let hasState = false;
         states.forEach(s => {
             let stateText = pruneString(s);
-            hasState = hasState || stateText == targetStates[i];
+            stateText = stateText.split(", ").sort().toString();
+            hasState = hasState || stateText == targetStatesOld[i].toString();
         });
         isCorrect = isCorrect && hasState;
     }
     if (isCorrect) {
+        hideHelpButtons();
         newHelpText = "Sehr gut. Als nächstes müssen die Transitionen auf die neuen Zustände gesetzt " +
             "werden.<br>" +
-            "Beginnen wir mit " + targetStatesOld[0] + ".<br>" +
-            "Der Zustand braucht eine 0-Transition nach " + lastTargets[0] + " und eine 1-Transition " +
-            "nach " + lastTargets[1] + ".";
+            "Beginnen wir mit {" + targetStatesOld[0] + "}.<br>" +
+            "Der Zustand braucht eine 0-Transition nach {" + lastTargetsOld[0][0] + "} und eine 1-Transition " +
+            "nach {" + lastTargetsOld[0][1] + "}.";
         helpResponse(newHelpText);
 
         let newButtonsDiv = document.createElement("div");
@@ -2068,5 +2125,7 @@ function ndetNewStates2() {
         newButton.innerHTML = "Habe ich gemacht.";
         document.getElementById("helper").appendChild(newButtonsDiv);
         newButtonsDiv.appendChild(newButton);
+    } else {
+        alert("Es fehlen noch Zustände.");
     }
 }
