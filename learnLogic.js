@@ -1514,9 +1514,23 @@ function minimizeSet() {
         let newHelpDiv = document.createElement("div");
         newHelpDiv.id = "help" + helpCounter;
         document.getElementById("helper").appendChild(newHelpDiv);
-        let newHelpText = "Die Mengen mit den Zuständen sehen jetzt so aus:<br>";
-
+        let newHelpText = "";      
+        
         let minimizedSet = minimizeFurther(sets);
+
+        if(setsThatRemain.length > 0){
+            newHelpText += "Die Zustände aus den Mengen vorher, die auf die gleichen anderen Mengen gezeigt haben, sind folgende:<br>";
+            for(let i = 0; i < setsThatRemain.length; i++){
+                newHelpText += setsThatRemain[i].toString() + " haben mit einer 0 auf die Menge M" + (iteration - 1) + "," + 
+                setsThatRemainIndices0[i] + " und mit einer 1 auf die Menge M" + (iteration - 1) + "," + setsThatRemainIndices1[i] +
+                " gezeigt.<br>"
+            }
+        }else{
+            newHelpText += "Keine der Zustände haben mit beiden Transitionen jeweils auf die gleichen Mengen gezeigt.<br>";
+        }
+        
+        newHelpText += "Die Mengen mit den Zuständen sehen also jetzt so aus:<br>";
+
         for (let i = 0; i < minimizedSet.length; i++) {
             newHelpText += "M" + iteration + "," + i + " = {" +
                 minimizedSet[i].toString() + "}" + ((i == minimizedSet.length - 1) ? "" : ",") + "<br>";
