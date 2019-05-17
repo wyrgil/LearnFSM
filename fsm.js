@@ -143,11 +143,11 @@ class FSM {
             let has1Transition = false;
             for (let j = 0; j < this.transitions.length; j++) {
                 if (this.transitions[j].from == this.states[i] &&
-                    this.transitions[j].sing == "0") {
+                    this.transitions[j].sign == "0") {
                     has0Transition = has0Transition || true;
                 }
                 if (this.transitions[j].from == this.states[i] &&
-                    this.transitions[j].sing == "1") {
+                    this.transitions[j].sign == "1") {
                     has1Transition = has1Transition || true;
                 }
             }

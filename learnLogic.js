@@ -2005,7 +2005,7 @@ function ndetNewStates() {
                         }
                     }
                     targets1 = [...new Set(targets1)];
-    
+
                     lastTargets[i] = new Array();
                     lastTargets[i].push([...targets0]);
                     lastTargets[i].push([...targets1]);
@@ -2164,28 +2164,25 @@ function ndetNewTransitions() {
         statesVisited.push(targetStatesOld.shift().sort().toString());
         lastTargets.shift();
 
-        // if (targetStatesOld.length <= 0) {
-        //     targetStatesOld = [...targetStates];
-        //     targetStates = new Array();
-        //     //compute new lastTarget
-        // }
+        if (answerToFSM().equivalence(solutionFSM) == 0) {
+            ndetNewStates()
+        } else {
 
+            newHelpText = "Sehr gut. Als nächstes macht man mit einem der neuen Zustände das gleiche.<br>" +
+                "Beginnen wir mit {" + targetStatesOld[0] + "}.";
+            helpResponse(newHelpText);
 
+            let newButtonsDiv = document.createElement("div");
+            newButtonsDiv.id = "helpButton" + helpCounter;
+            let newButton = document.createElement("button");
 
-        newHelpText = "Sehr gut. Als nächstes macht man mit einem der neuen Zustände das gleiche.<br>" +
-            "Beginnen wir mit {" + targetStatesOld[0] + "}.";
-        helpResponse(newHelpText);
-
-        let newButtonsDiv = document.createElement("div");
-        newButtonsDiv.id = "helpButton" + helpCounter;
-        let newButton = document.createElement("button");
-
-        newButton.onclick = function () {
-            ndetNewStates();
+            newButton.onclick = function () {
+                ndetNewStates();
+            }
+            newButton.innerHTML = "Okay";
+            document.getElementById("helper").appendChild(newButtonsDiv);
+            newButtonsDiv.appendChild(newButton);
         }
-        newButton.innerHTML = "Okay";
-        document.getElementById("helper").appendChild(newButtonsDiv);
-        newButtonsDiv.appendChild(newButton);
     } else if (!isCorrect0 && !isCorrect1) {
         alert("Es fehlen noch beide Transitionen.");
     } else if (!isCorrect0) {
@@ -2203,7 +2200,7 @@ function ndetNewStates2() {
         states.forEach(s => {
             let stateText = pruneString(s);
             stateText = stateText.split(", ").sort().toString();
-            hasState = hasState ||  targetStatesOld[i].includes(stateText);
+            hasState = hasState || targetStatesOld[i].includes(stateText);
         });
         isCorrect = isCorrect && hasState;
     }
