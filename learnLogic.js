@@ -53,15 +53,33 @@ var bottomHints = 2.5;
 var hintCountTop;
 var hintCountBottom;
 
+/**
+ * These are global help variables
+ */
 var helpCounter = 1;
-
-var setSave;
 var iterationSave = 0;
+
+
+/**
+ * These variables are needed for the minimize help
+ */
+var setSave;
+
 var endSetSave;
 
 var setsThatRemain;
 var setsThatRemainIndices0;
 var setsThatRemainIndices1;
+
+/**
+ * These variables are needed for the ndet help
+ */
+var targetStates = new Array();
+var targetStatesOld = new Array();
+var statesVisited = new Array();
+var arrayIterator = 0;
+var lastState;
+var lastTargets = new Array();
 
 /**
  * This is used to highlight corresponding states in the other paper.
@@ -622,7 +640,7 @@ function setTransition(node, lbl) {
         }
         if (graphAnswer.getLinks().length > 0) {
             graphAnswer.getLinks().forEach(linkId => {
-                if (newNeeded && from == graphAnswer.getCell(linkId.source().id).attributes.attrs.text.text) {
+                if (newNeeded && graphAnswer.getCell(linkId.source().id).attributes.type != "fsa.StartState" && from == graphAnswer.getCell(linkId.source().id).attributes.attrs.text.text) {
                     if (linkId.label().attrs.text.text.includes(lbl)) {
                         infoTextColor("Dieser Zustand hat bereits eine Transition mit diesem Literal.", "red");
                         newNeeded = false;
@@ -1852,18 +1870,203 @@ function ndetHelp() {
     let newHelpDiv = document.createElement("div");
     newHelpDiv.id = "help" + helpCounter;
     document.getElementById("helper").appendChild(newHelpDiv);
-    let newHelpText = "Bei der Minimierung ist die Idee, die Zustände aus der Aufgabe so " +
-        "in Zustandsmengen zusammenzufassen, dass alle Zustände in einer Menge äquivalent sind.<br>" +
-        "Der erste Schritt hierbei ist, alle akzeptierenden und alle nichtakzeptierenden Zustände " +
-        "jeweils in einer Menge zusammenzufassen.";
+    let newHelpText = "Bei der Überführung eines nichtdeterministischen Automaten in einen deterministischen " +
+        "Automaten ist die Idee, die Zustände aus der Aufgabe beginnend beim Startzustand " +
+        "durchzugehen und für alle Zustände, die erreicht werden können, eine Zustandsmenge für 0 Transitionen " +
+        "und eine für 1 Transitionen zu erzeugen.";
     newHelpDiv.innerHTML = newHelpText;
     let newButtonsDiv = document.createElement("div");
     newButtonsDiv.id = "helpButton" + helpCounter;
     let newButton = document.createElement("button");
     newButton.onclick = function () {
-        minimizeSet(0);
+        ndetStep(0);
     }
     newButton.innerHTML = "Ersten Schritt machen";
     document.getElementById("helper").appendChild(newButtonsDiv);
     newButtonsDiv.appendChild(newButton);
+}
+
+function ndetStep() {
+    hideHelpButtons();
+    let newHelpText = "Der Startzustand in der Aufgabe ist " + questionFSM.states[questionFSM.start] +
+        ". Am besten beginnt man damit, den Startzustand zu übernehmen.<br>";
+    helpResponse(newHelpText);
+
+    let newButtonsDiv = document.createElement("div");
+    newButtonsDiv.id = "helpButton" + helpCounter;
+    let newButton = document.createElement("button");
+
+    newButton.onclick = function () {
+        ndetNewStates();
+    }
+    newButton.innerHTML = "Habe ich gemacht";
+    document.getElementById("helper").appendChild(newButtonsDiv);
+    newButtonsDiv.appendChild(newButton);
+}
+
+function ndetNewStates() {
+    if (iterationSave == 0) {
+        if (!startState) {
+            alert("Es gibt noch keinen Startzustand.");
+        } else {
+            let stateText = pruneString(startState.attributes.attrs.text.text);
+            if (states.size == 1 && stateText == questionFSM.states[questionFSM.start]) {
+                hideHelpButtons();
+                let newHelpText = "Sehr gut. Als nächstes muss man sich die Transitionen des " +
+                    "Startzustands in der Aufgabe betrachten. Er hat hier 0-Transitionen nach ";
+                let moreThanOne = false;
+                let targets0 = new Array();
+                let targets1 = new Array();
+                for (let i = 0; i < questionFSM.transitions.length; i++) {
+                    let trans = questionFSM.transitions[i];
+                    if (trans.from == stateText && trans.sign == 0) {
+                        newHelpText += (moreThanOne ? ", " : " ");
+                        newHelpText += trans.to;
+                        targets0.push(trans.to);
+                        moreThanOne = true;
+                    }
+                }
+                moreThanOne = false;
+                newHelpText += " und 1-Transitionen nach ";
+                for (let i = 0; i < questionFSM.transitions.length; i++) {
+                    let trans = questionFSM.transitions[i];
+                    if (trans.from == stateText && trans.sign == 1) {
+                        newHelpText += (moreThanOne ? ", " : " ");
+                        newHelpText += trans.to;
+                        targets1.push(trans.to);
+                        moreThanOne = true;
+                    }
+                }
+                newHelpText += ".<br>" +
+                    "Also müssen jetzt alle Zustände auf die eine 0-Transition zeigt und alle Zustände auf " +
+                    "die eine 1-Transition zeigt in jeweils eine Zustandsmenge zusammengefasst werden, " +
+                    "also für 0 in die Menge {" + targets0.toString() + "} und für 1 in die Menge {" +
+                    targets1.toString() + "}.";
+                targetStatesOld.push(targets0);
+                targetStatesOld.push(targets1);
+                iterationSave++;
+                helpResponse(newHelpText);
+
+                lastState = stateText;
+
+                let newButtonsDiv = document.createElement("div");
+                newButtonsDiv.id = "helpButton" + helpCounter;
+                let newButton = document.createElement("button");
+
+                newButton.onclick = function () {
+                    ndetNewStates2();
+                }
+                newButton.innerHTML = "Habe ich gemacht";
+                document.getElementById("helper").appendChild(newButtonsDiv);
+                newButtonsDiv.appendChild(newButton);
+            } else {
+                alert("Der Startzustand ist noch nicht korrekt.");
+            }
+        }
+    } else {
+        let stateText = targetStatesOld[0];
+        lastState = stateText;
+        let newHelpText = "Der Zustand " + stateText + "hat hier 0-Transitionen nach ";
+        let moreThanOne = false;
+        let targets0 = new Array();
+        let targets1 = new Array();
+        for (let i = 0; i < questionFSM.transitions.length; i++) {
+            let trans = questionFSM.transitions[i];
+            if (trans.from == stateText && trans.sign == 0) {
+                newHelpText += (moreThanOne ? ", " : " ");
+                newHelpText += trans.to;
+                targets0.push(trans.to);
+                moreThanOne = true;
+            }
+        }
+        moreThanOne = false;
+        newHelpText += " und 1-Transitionen nach ";
+        for (let i = 0; i < questionFSM.transitions.length; i++) {
+            let trans = questionFSM.transitions[i];
+            if (trans.from == stateText && trans.sign == 1) {
+                newHelpText += (moreThanOne ? ", " : " ");
+                newHelpText += trans.to;
+                targets1.push(trans.to);
+                moreThanOne = true;
+            }
+        }
+        newHelpText += ".<br>" +
+            "Also müssen jetzt alle Zustände auf die eine 0-Transition zeigt und alle Zustände auf " +
+            "die eine 1-Transition zeigt in jeweils eine Zustandsmenge zusammengefasst werden, " +
+            "also für 0 in die Menge {" + targets0.toString() + "} und für 1 in die Menge {" +
+            targets1.toString() + "}.";
+        targetStates.push(targets0);
+        targetStates.push(targets1);
+        lastTargets[0] = targets0;
+        lastTargets[1] = targets1;
+        iterationSave++;
+    }
+}
+
+function ndetNewTransitions() {
+    let isCorrect0 = false;
+    let isCorrect1 = false;
+    graphAnswer.getLinks().forEach(link => {
+        if (link.attributes.type != "fsa.StartState" && link.attributes.labels[0].attrs.text.text == "0") {
+            if (pruneString(graphAnswer.getCell(link.source().id).attributes.attrs.text.text) == lastState &&
+                (pruneString(graphAnswer.getCell(link.target().id).attributes.attrs.text.text) == lastTargets[0])) {
+                    isCorrect0 = true;
+            }
+        }
+        if (link.attributes.type != "fsa.StartState" && link.attributes.labels[0].attrs.text.text == "1") {
+            if (pruneString(graphAnswer.getCell(link.source().id).attributes.attrs.text.text) == lastState &&
+                (pruneString(graphAnswer.getCell(link.target().id).attributes.attrs.text.text) == lastTargets[1])) {
+                    isCorrect0 = true;
+            }
+        }
+    });
+
+    if (isCorrect) {
+        newHelpText = "Sehr gut. Als nächstes macht man mit einem der neuen Zustände das gleiche.<br>" +
+            "Beginnen wir mit " + targetStatesOld[0] + ".";
+        helpResponse(newHelpText);
+
+        let newButtonsDiv = document.createElement("div");
+        newButtonsDiv.id = "helpButton" + helpCounter;
+        let newButton = document.createElement("button");
+
+        newButton.onclick = function () {
+            ndetNewStates();
+        }
+        newButton.innerHTML = "Okay";
+        document.getElementById("helper").appendChild(newButtonsDiv);
+        newButtonsDiv.appendChild(newButton);
+    }
+}
+
+
+function ndetNewStates2() {
+    let isCorrect = true;
+    for (let i = 0; i < targetStates.length; i++) {
+        let hasState = false;
+        states.forEach(s => {
+            let stateText = pruneString(s);
+            hasState = hasState || stateText == targetStates[i];
+        });
+        isCorrect = isCorrect && hasState;
+    }
+    if (isCorrect) {
+        newHelpText = "Sehr gut. Als nächstes müssen die Transitionen auf die neuen Zustände gesetzt " +
+            "werden.<br>" +
+            "Beginnen wir mit " + targetStatesOld[0] + ".<br>" +
+            "Der Zustand braucht eine 0-Transition nach " + lastTargets[0] + " und eine 1-Transition " +
+            "nach " + lastTargets[1] + ".";
+        helpResponse(newHelpText);
+
+        let newButtonsDiv = document.createElement("div");
+        newButtonsDiv.id = "helpButton" + helpCounter;
+        let newButton = document.createElement("button");
+
+        newButton.onclick = function () {
+            ndetNewTransitions();
+        }
+        newButton.innerHTML = "Habe ich gemacht.";
+        document.getElementById("helper").appendChild(newButtonsDiv);
+        newButtonsDiv.appendChild(newButton);
+    }
 }
