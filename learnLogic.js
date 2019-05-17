@@ -960,7 +960,7 @@ function check() {
             onLoad();
         }
     } else {
-        if (document.getElementById("questionType").innerHTML != "minimize" && fsmToCheck.equivalence(solutionFSM) == 0) {
+        if (document.body.getAttribute("questiontype") != "minimize" && fsmToCheck.equivalence(solutionFSM) == 0) {
             alert("Diese Antwort ist korrekt, jedoch noch nicht minimal.");
             if (confirm("Für einen Minimalen Automaten gilt noch:\n" + equality + "\nAbrrechen, um es weiter zu versuchen, OK für die nächste Aufgabe.")) {
                 onLoad();
@@ -978,29 +978,29 @@ function answerToFSM() {
     let newTransitions = new Array();
     let newStates = Array.from(states);
     let newStartState;
-    let ends = new Array();
+    let newEnds = new Array();
 
     if (graphAnswer.getLinks().length > 0) {
         graphAnswer.getLinks().forEach(link => {
             if (link != startLink) {
                 link.label().attrs.text.text.split(', ').forEach(splitLabel => {
                     newTransitions.push({
-                        from: link.source().id,
+                        from: graphAnswer.getCell(link.source().id).attributes.attrs.text.text,
                         sign: splitLabel,
-                        to: link.target().id
+                        to: graphAnswer.getCell(link.target().id).attributes.attrs.text.text
                     });
                 });
             }
         });
     }
 
-    newStartState = (startState != null) ? newStates.indexOf(startState.id) : null;
+    newStartState = (startState != null) ? newStates.indexOf(graphAnswer.getCell(startState.id).attributes.attrs.text.text) : null;
 
     finishStates.forEach(fState => {
-        ends.push(newStates.indexOf(fState.id));
+        newEnds.push(newStates.indexOf(graphAnswer.getCell(fState.id).attributes.attrs.text.text));
     });
 
-    return new FSM(newStartState, newStates, newTransitions, ends);
+    return new FSM(newStartState, newStates, newTransitions, newEnds);
 }
 
 /**
@@ -1501,7 +1501,7 @@ function minimizeSet() {
         let newButtonsDiv = document.createElement("div");
         newButtonsDiv.id = "helpButton" + helpCounter;
         let newButton = document.createElement("button");
-        
+
         endSetSave = [endStates];
         setSave = [otherStates];
         newButton.onclick = function () {
@@ -1514,28 +1514,56 @@ function minimizeSet() {
         let newHelpDiv = document.createElement("div");
         newHelpDiv.id = "help" + helpCounter;
         document.getElementById("helper").appendChild(newHelpDiv);
-        let newHelpText = "";      
-        
+        let newHelpText = "";
+
         let minimizedSet = minimizeFurther(sets);
 
-        if(setsThatRemain.length > 0){
+        if (setsThatRemain.length > 0) {
             newHelpText += "Die Zustände aus den Mengen vorher, die auf die gleichen anderen Mengen gezeigt haben, sind folgende:<br>";
-            for(let i = 0; i < setsThatRemain.length; i++){
-                newHelpText += setsThatRemain[i].toString() + " haben mit einer 0 auf die Menge M" + (iteration - 1) + "," + 
-                setsThatRemainIndices0[i] + " und mit einer 1 auf die Menge M" + (iteration - 1) + "," + setsThatRemainIndices1[i] +
-                " gezeigt.<br>"
+            for (let i = 0; i < setsThatRemain.length; i++) {
+                newHelpText += setsThatRemain[i].toString() + " haben mit einer 0 auf die Menge M" + (iteration - 1) + "," +
+                    setsThatRemainIndices0[i] + " und mit einer 1 auf die Menge M" + (iteration - 1) + "," + setsThatRemainIndices1[i] +
+                    " gezeigt.<br><br>"
             }
-        }else{
-            newHelpText += "Keine der Zustände haben mit beiden Transitionen jeweils auf die gleichen Mengen gezeigt.<br>";
+        } else {
+            newHelpText += "Keine der Zustände haben mit beiden Transitionen jeweils auf die gleichen Mengen gezeigt.<br><br>";
         }
-        
+
         newHelpText += "Die Mengen mit den Zuständen sehen also jetzt so aus:<br>";
 
         for (let i = 0; i < minimizedSet.length; i++) {
             newHelpText += "M" + iteration + "," + i + " = {" +
                 minimizedSet[i].toString() + "}" + ((i == minimizedSet.length - 1) ? "" : ",") + "<br>";
         }
-        newHelpDiv.innerHTML = newHelpText;
+
+        if (!setCompare(minimizedSet, setSave)) {
+
+            newHelpText += "Um fortzufahren, ist es am besten, die neuen Mengen links als Zustände zu übernehmen.";
+
+            newHelpDiv.innerHTML = newHelpText;
+
+            xPos = 0;
+            yPos = 0;
+
+            setSave = minimizedSet;
+
+            let newButtonsDiv = document.createElement("div");
+            newButtonsDiv.id = "helpButton" + helpCounter;
+            let newButton = document.createElement("button");
+
+            newButton.onclick = function () {
+                minimizeHelpStep();
+            }
+            newButton.innerHTML = "Habe ich gemacht";
+            document.getElementById("helper").appendChild(newButtonsDiv);
+            newButtonsDiv.appendChild(newButton);
+
+        }else{
+            newHelpText += "<br>Die Mengen haben sich im vergleich zum vorherigen Schritt nicht verändert, das bedeutet, der Automat ist jetzt minimal.<br>" +
+            "Es müssen nur noch die Transitionen eingezeichnet werden, dann ist die Aufgabe abgeschlossen.";
+
+            newHelpDiv.innerHTML = newHelpText;
+        }
     }
 }
 
@@ -1646,12 +1674,12 @@ function minimizeFurther() {
                     getSetIndex(sets, questionFSM.getNextState(tempS[i], 1)) == target1index) {
                     s1.push(tempS.pop(i));
                     i--;
-                    if(multiplePushed.length > 0){
+                    if (multiplePushed.length > 0) {
                         multiplePushed.push(s1[s1.length - 1]);
                     }
                 }
             }
-            if(multiplePushed.length > 1){
+            if (multiplePushed.length > 1) {
                 setsThatRemain.push(multiplePushed);
                 setsThatRemainIndices0.push(target0index);
                 setsThatRemainIndices1.push(target1index);
@@ -1673,15 +1701,28 @@ function getSetIndex(sets, elem) {
 }
 
 function quickArrayCompare(arr1, arr2) {
-    var result = false;
+    let result = false;
     if (arr1.length != arr2.length) {
         return false;
     }
-    var i = 0;
     if (arr1 && arr2) {
         result = true;
-        for (i; i < arr1.length && result; i++) {
+        for (let i = 0; i < arr1.length && result; i++) {
             result = (arr1[i] == arr2[i]);
+        }
+    }
+    return result;
+}
+
+function setCompare(set1, set2) {
+    let result = false;
+    if (set1.length != set2.length) {
+        return false;
+    }
+    if (set1 && set2) {
+        result = true;
+        for (let i = 0; i < set1.length; i++) {
+            result = result && quickArrayCompare(set1[i].sort(), set2[i].sort());
         }
     }
     return result;
