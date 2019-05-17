@@ -844,21 +844,60 @@ function loadQuestion(id) {
                     }
                 }
                 break;
+            case "language":
+                    packedQuestion = {
+                        questionText: "Erzeugen sie einen Automaten zu Sprache L={\"alle Zeichenketten, bei denen die Anzahl der Einsen durch 3 teilbar ist\"}.",
+                        
+                        solutionFSM: {
+                            start: 0,
+                            states: ["q0", "q1", "q2"],
+                            ends: [0],
+                            transitions: [{
+                                from: "q0",
+                                sign: "0",
+                                to: "q0"
+                            }, {
+                                from: "q0",
+                                sign: "1",
+                                to: "q1"
+                            }, {
+                                from: "q1",
+                                sign: "0",
+                                to: "q1"
+                            }, {
+                                from: "q1",
+                                sign: "1",
+                                to: "q2"
+                            }, {
+                                from: "q2",
+                                sign: "0",
+                                to: "q2"
+                            }, {
+                                from: "q2",
+                                sign: "1",
+                                to: "q0"
+                            }]
+                        }
+                    }
+                    break;
             default:
                 break;
         }
     }
     document.getElementById("questionText").innerHTML = packedQuestion.questionText;
-    questionFSM = new FSM(packedQuestion.questionFSM.start,
-        packedQuestion.questionFSM.states,
-        packedQuestion.questionFSM.transitions,
-        packedQuestion.questionFSM.ends);
+
+    
     solutionFSM = new FSM(packedQuestion.solutionFSM.start,
         packedQuestion.solutionFSM.states,
         packedQuestion.solutionFSM.transitions,
         packedQuestion.solutionFSM.ends);
 
     if (packedQuestion.questionFSM) {
+        questionFSM = new FSM(packedQuestion.questionFSM.start,
+        packedQuestion.questionFSM.states,
+        packedQuestion.questionFSM.transitions,
+        packedQuestion.questionFSM.ends);
+
         drawQuestion(questionFSM);
     }
 }
