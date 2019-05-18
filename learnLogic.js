@@ -81,6 +81,19 @@ var lastState;
 var lastTargets = new Array();
 
 /**
+ * These variables are needed for the language help
+ */
+var hiddenState;
+var hiddenIndex;
+var savedStateSize;
+var stateMap = new Map();
+var hiddenTarget;
+var stepSave;
+var statesVisited = new Array();
+var currentState;
+var statesToVisit = new Array();
+
+/**
  * This is used to highlight corresponding states in the other paper.
  */
 var customHighlighter = {
@@ -845,48 +858,48 @@ function loadQuestion(id) {
                 }
                 break;
             case "language":
-                    packedQuestion = {
-                        questionText: "Erzeugen sie einen Automaten zu Sprache L={\"alle Zeichenketten, bei denen die Anzahl der Einsen durch 3 teilbar ist\"}.",
-                        
-                        solutionFSM: {
-                            start: 0,
-                            states: ["q0", "q1", "q2"],
-                            ends: [0],
-                            transitions: [{
-                                from: "q0",
-                                sign: "0",
-                                to: "q0"
-                            }, {
-                                from: "q0",
-                                sign: "1",
-                                to: "q1"
-                            }, {
-                                from: "q1",
-                                sign: "0",
-                                to: "q1"
-                            }, {
-                                from: "q1",
-                                sign: "1",
-                                to: "q2"
-                            }, {
-                                from: "q2",
-                                sign: "0",
-                                to: "q2"
-                            }, {
-                                from: "q2",
-                                sign: "1",
-                                to: "q0"
-                            }]
-                        }
+                packedQuestion = {
+                    questionText: "Erzeugen sie einen Automaten zu Sprache L={\"alle Zeichenketten, bei denen die Anzahl der Einsen durch 3 teilbar ist\"}.",
+
+                    solutionFSM: {
+                        start: 0,
+                        states: ["q0", "q1", "q2"],
+                        ends: [0],
+                        transitions: [{
+                            from: "q0",
+                            sign: "0",
+                            to: "q0"
+                        }, {
+                            from: "q0",
+                            sign: "1",
+                            to: "q1"
+                        }, {
+                            from: "q1",
+                            sign: "0",
+                            to: "q1"
+                        }, {
+                            from: "q1",
+                            sign: "1",
+                            to: "q2"
+                        }, {
+                            from: "q2",
+                            sign: "0",
+                            to: "q2"
+                        }, {
+                            from: "q2",
+                            sign: "1",
+                            to: "q0"
+                        }]
                     }
-                    break;
+                }
+                break;
             default:
                 break;
         }
     }
     document.getElementById("questionText").innerHTML = packedQuestion.questionText;
 
-    
+
     solutionFSM = new FSM(packedQuestion.solutionFSM.start,
         packedQuestion.solutionFSM.states,
         packedQuestion.solutionFSM.transitions,
@@ -894,9 +907,9 @@ function loadQuestion(id) {
 
     if (packedQuestion.questionFSM) {
         questionFSM = new FSM(packedQuestion.questionFSM.start,
-        packedQuestion.questionFSM.states,
-        packedQuestion.questionFSM.transitions,
-        packedQuestion.questionFSM.ends);
+            packedQuestion.questionFSM.states,
+            packedQuestion.questionFSM.transitions,
+            packedQuestion.questionFSM.ends);
 
         drawQuestion(questionFSM);
     }
@@ -1545,6 +1558,9 @@ function noIdea() {
             break;
         case "ndet":
             ndetHelp();
+            break;
+        case "language":
+            languageHelp();
             break;
     }
 }
@@ -2261,9 +2277,6 @@ function ndetNewStates2() {
     });
 
     if (isCorrect) {
-
-
-
         if (finishFlag) {
             alert("Es fehlt noch ein Zielzustand.");
         } else {
@@ -2289,4 +2302,251 @@ function ndetNewStates2() {
     } else {
         alert("Es fehlen noch Zustände.");
     }
+}
+
+function languageHelp() {
+    let newHelpDiv = document.createElement("div");
+    newHelpDiv.id = "help" + helpCounter;
+    document.getElementById("helper").appendChild(newHelpDiv);
+    let newHelpText = "Bei der Erzeugung eines Automaten aus einer Sprache ist die Idee, " +
+        "sich für einzelne Zeichenketten zu überlegen, ob sie zur Sprache gehören oder ob man etwas " +
+        "an sie anhängen kann, damit sie zur Sprache gehören.";
+    newHelpDiv.innerHTML = newHelpText;
+    let newButtonsDiv = document.createElement("div");
+    newButtonsDiv.id = "helpButton" + helpCounter;
+    let newButton = document.createElement("button");
+    newButton.onclick = function () {
+        languageStep1();
+    }
+    newButton.innerHTML = "Ersten Schritt machen";
+    document.getElementById("helper").appendChild(newButtonsDiv);
+    newButtonsDiv.appendChild(newButton);
+}
+
+function languageStep1() {
+    hideHelpButtons();
+    let newHelpText = "Man beginnt damit, zu überlegen ob das leere Wort zur Sprache gehört. Wenn ja, dann " +
+        "muss der Startzustand akzeptierend sein, sonst darf er das nicht sein.";
+
+    if (solutionFSM.compute("")) {
+        newHelpText += "<br>Hier gehört das leere Wort zur Sprache, der Startzustand muss also akzeptierend sein.";
+    } else {
+        newHelpText += "<br>Hier gehört das leere Wort nicht zur Sprache, der Startzustand " +
+            "darf also nicht akzeptierend sein."
+    }
+    helpResponse(newHelpText);
+    let newButtonsDiv = document.createElement("div");
+    newButtonsDiv.id = "helpButton" + helpCounter;
+    let newButton = document.createElement("button");
+    newButton.onclick = function () {
+        languageStep2();
+    }
+    newButton.innerHTML = "Weiter";
+    document.getElementById("helper").appendChild(newButtonsDiv);
+    newButtonsDiv.appendChild(newButton);
+
+    hiddenIndex = solutionFSM.start;
+    hiddenState = solutionFSM.states[hiddenIndex];
+    savedStateSize = 0;
+}
+
+function languageStep2() {
+
+    let errorMessage = 1;
+    if (states.size == savedStateSize + 1) {
+        let s = [...states];
+        for (let [key, value] of stateMap) {
+            if (s.includes(value)) {
+                let i = s.indexOf(value);
+                s.splice(i, 1);
+            }
+        }
+        console.log(s.length);
+        if (s.length == 1) {
+            stateMap.set(hiddenState, s[0]);
+            currentState = s[0];
+        }
+    }
+
+    if (states.size > savedStateSize + 1) {
+        errorMessage = "Es wurden zu viele Zustände hinzugefügt.";
+    } else if (states.size < savedStateSize + 1) {
+        if (answerToFSM.equivalence(solutionFSM) == 0) {
+            errorMessage = 2;
+        } else {
+            errorMessage = "Es wurden keine neuen Zustände hinzugefügt.";
+        }
+    }
+
+    if (errorMessage == 1) {
+
+        savedStateSize++;
+        hideHelpButtons();
+
+        let newHelpText = "Jetzt muss man sich fragen, was passiert, wenn man im Zustand " +
+            currentState + " an die Zeichenkette eine 0 anhängt.<br>";
+
+        let nextState = solutionFSM.getNextState(hiddenState, "0");
+
+        if (nextState == hiddenState) {
+            newHelpText += "Hier ändert sich bezüglich der Sprache nichts, wenn eine 0 angehängt wird, " +
+                "man bleibt also im gleichen Zustand. Das heißt, er kann eine 0-Transition auf sich selbst bekommen.";
+            hiddenTarget = false;
+        } else {
+            newHelpText += "Hier ändert sich sich etwas, wenn man eine 0 anhängt. Man benötigt also eine " +
+                "0-Transition in einen anderen Zustand.<br>";
+            hiddenTarget = solutionFSM.getNextState(hiddenState);
+
+            let mapContains = stateMap.has(hiddenTarget);
+            if (mapContains) {
+                newHelpText += "Dieser Zustand ist aber bereits erstellt. Welcher könnte es sein?";
+            } else {
+                newHelpText += "Diesen Zustand gibt es aber noch nicht. Da muss ein neuer angelegt werden.";
+                if (!statesToVisit.includes(hiddenTarget)) {
+                    statesToVisit.push(hiddenTarget);
+                }
+            }
+        }
+        helpResponse(newHelpText);
+        let newButtonsDiv = document.createElement("div");
+        newButtonsDiv.id = "helpButton" + helpCounter;
+
+        if (nextState != hiddenState && hiddenTarget) {
+            let revealButton = document.createElement("button");
+            revealButton.onclick = function () {
+                languageReveal();
+            }
+            stepSave = 3;
+            revealButton.innerHTML = "Zeigen";
+            revealButton.id = "revealbtn" + helpCounter;
+
+            newButtonsDiv.appendChild(revealButton);
+
+        }
+        document.getElementById("helper").appendChild(newButtonsDiv);
+        let newButton = document.createElement("button");
+        newButton.onclick = function () {
+            languageStep3();
+        }
+        newButton.innerHTML = "Weiter";
+        document.getElementById("helper").appendChild(newButtonsDiv);
+        newButtonsDiv.appendChild(newButton);
+    } else if(errorMessage == 2){
+        hideHelpButtons();
+        helpResponse("Fertig.");
+    }else{
+        alert(errorMessage);
+    }
+}
+
+
+function languageStep3() {
+    let thisState;
+    let errorMessage = 1;
+    let thisTarget = hiddenTarget;
+
+    let hiddenAdd = 0;
+    if (hiddenTarget && !stateMap.has(hiddenTarget)) {
+        hiddenAdd = 1;
+    }
+    if (states.size == savedStateSize + hiddenAdd) {
+        let s = [...states];
+        for (let [key, value] of stateMap) {
+            if (s.includes(value)) {
+                let i = s.indexOf(value);
+                s.splice(i, 1);
+            }
+        }
+        console.log(s.length);
+        if (s.length == 1 && hiddenTarget) {
+            stateMap.set(hiddenTarget, s[0]);
+        }
+    }
+    if (states.size > savedStateSize + hiddenAdd) {
+        errorMessage = "Es wurden zu viele Zustände hinzugefügt.";
+    } else if (states.size < savedStateSize + hiddenAdd) {
+        errorMessage = "Es wurden keine neuen Zustände hinzugefügt.";
+    }
+
+    if (errorMessage == 1) {
+        hideHelpButtons();
+
+        let newHelpText = "Jetzt muss man sich fragen, was passiert, wenn man im Zustand " +
+            currentState + " an die Zeichenkette eine 1 anhängt.<br>";
+
+        let nextState = solutionFSM.getNextState(hiddenState, "1");
+
+        if (nextState == hiddenState) {
+            newHelpText += "Hier ändert sich bezüglich der Sprache nichts, wenn eine 1 angehängt wird, " +
+                "man bleibt also im gleichen Zustand. Das heißt, er kann eine 1-Transition auf sich selbst bekommen.";
+            hiddenTarget = false;
+        } else {
+            newHelpText += "Hier ändert sich sich etwas, wenn man eine 1 anhängt. Man benötigt also eine " +
+                "1-Transition in einen anderen Zustand.<br>";
+            hiddenTarget = solutionFSM.getNextState(hiddenState, "1");
+            let mapContains = stateMap.has(hiddenTarget);
+            if (mapContains) {
+                newHelpText += "Dieser Zustand ist aber bereits erstellt. Welcher könnte es sein?";
+            } else {
+                newHelpText += "Diesen Zustand gibt es aber noch nicht. Da muss ein neuer angelegt werden.";
+                if (!statesToVisit.includes(hiddenTarget)) {
+                    statesToVisit.push(hiddenTarget);
+                }
+            }
+        }
+        helpResponse(newHelpText);
+        let newButtonsDiv = document.createElement("div");
+        newButtonsDiv.id = "helpButton" + helpCounter;
+
+        if (stateMap.has(hiddenTarget)) {
+            let revealButton = document.createElement("button");
+            revealButton.onclick = function () {
+                languageReveal();
+            }
+            stepSave = 2;
+            revealButton.innerHTML = "Zeigen";
+            revealButton.id = "revealbtn" + helpCounter;
+
+            newButtonsDiv.appendChild(revealButton);
+
+        }
+        document.getElementById("helper").appendChild(newButtonsDiv);
+        let newButton = document.createElement("button");
+        newButton.onclick = function () {
+            languageStep2();
+        }
+        newButton.innerHTML = "Weiter";
+        document.getElementById("helper").appendChild(newButtonsDiv);
+        newButtonsDiv.appendChild(newButton);
+
+        statesVisited.push(hiddenState);
+        hiddenState = hiddenTarget ? hiddenTarget : null;
+    } else {
+        alert(errorMessage);
+    }
+}
+
+function languageReveal() {
+    hideHelpButtons();
+
+    let newHelpText = "Der gesuchte Zustand ist " + hiddenTarget + ".";
+    helpResponse(newHelpText);
+
+    let newButtonsDiv = document.createElement("div");
+    newButtonsDiv.id = "helpButton" + helpCounter;
+    let newButton = document.createElement("button");
+    if (stepSave == 2) {
+        newButton.onclick = function () {
+            languageStep2();
+        }
+    }
+    if (stepSave == 3) {
+        newButton.onclick = function () {
+            languageStep3();
+        }
+    }
+
+    newButton.innerHTML = "Weiter";
+    document.getElementById("helper").appendChild(newButtonsDiv);
+    newButtonsDiv.appendChild(newButton);
 }
