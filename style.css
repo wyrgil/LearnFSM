@@ -14,11 +14,12 @@ body {
     position: relative;
     left: 0;
     top: 0;
+    float: left;
 }
 
 #paperQuestion {
     background-color: #d3d3d3;
-    height: 30% !important;
+    height: 90% !important;
     width: 100%;
     position: relative;
     left: 0;
@@ -56,7 +57,7 @@ body {
 }
 
 svg {
-    height: 90%
+    height: 100%
 }
 
 .joint-paper-grid {
@@ -65,4 +66,98 @@ svg {
 
 .joint-paper-background {
     height: 90%
+}
+
+#questionSection {
+    height: 35%
+}
+
+table{
+    font-size: 1em;
+}
+
+.transitionsTable{
+    width: 100%;
+}
+
+tr:nth-child(even){
+    background-color: #ffffff77;
+}
+
+tr.selected{
+    background-color: yellow;
+}
+
+tr.softselected{
+    background-color: green;
+}
+
+th{
+    text-align: left;
+}
+
+tr.tableHighlight{
+    background-color: #FFFF0077;
+}
+
+.tablesBox{
+    width: 26%;
+    float: right;
+    margin-left: 4%;
+    text-align: left;
+}
+
+.fsmBox {
+    width: 70%;
+    float: left;
+}
+
+#answerSection{
+    height: 60%;
+}
+
+#answerButtons{
+    float: left;
+}
+
+#deleteState{
+    float: right;
+}
+
+#infoBox{
+    width: 100%;
+    clear: both;
+}
+
+#mainContent{
+    margin-left: 40%;
+    margin-right: 40%;
+    width: 60%;
+    margin: auto;
+    display: block;
+}
+
+#openHelper{
+    position: absolute;
+    bottom:0;
+    right:0;
+    width: 9vw;
+    height: 16vh;
+}
+
+.sidebar{
+    background-color: white;
+
+    height: 100%;
+    width: 24%;
+    position: fixed!important;
+    overflow: auto;
+    right: 0px;
+    top: 0px;
+
+    vertical-align: top;
+}
+.sidebar div{
+    margin-left: 8px;
+    margin-top: 8px;
 }
