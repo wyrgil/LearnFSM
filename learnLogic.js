@@ -494,6 +494,9 @@ function newState(fromTop) {
                 yPos -= delta;
                 xPos += delta;
             }
+            if(xPos > delta * 4){
+                xPos = delta/2;
+            }
             infoTextColor("Neuen Zustand " + stateName + " erfolgreich erstellt.", "green");
             states.add(stateName);
             nodes.add(node);
