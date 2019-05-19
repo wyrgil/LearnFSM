@@ -1270,7 +1270,7 @@ function hint(answer) {
 }
 
 /**
- * This function is copied from the jointJS tutorial, which can be found on 
+ * This function is retrieved from the jointJS tutorial, which can be found on 
  * https://resources.jointjs.com/tutorial/multiple-links-between-elements .
  */
 function adjustVertices(graph, cell) {
@@ -1391,12 +1391,23 @@ function adjustVertices(graph, cell) {
     }
 }
 
+/**
+ * Adjusts all vertices for the given graph using adjustVertices().
+ * 
+ * @param {Graph} graph : Graph, in which all vertices are to be adjusted.
+ */
 function adjustAll(graph) {
     graph.getLinks().forEach(link => {
         adjustVertices(graph, link);
     });
 }
 
+/**
+ * Helper function to remove starting "{", trailing "}" and all
+ * occurrences of linebreak inside the given string.
+ * 
+ * @param {String} s : String to prune.
+ */
 function pruneString(s) {
     let newS = s;
     if (s[0] == "{") {
@@ -1406,6 +1417,14 @@ function pruneString(s) {
     return newS;
 }
 
+/**
+ * Highlights all transitions in graph answer or quesition, depending on wich graph is set in the 
+ * parameter. This graph is then checked for the clicked state and the OTHER graph gets its
+ * transitions highlighted. 0 transitions are red, 1 transitions are blue and if they are both magenta.
+ * 
+ * @param {Graph} graph : Graph to check for clicked state.
+ * @param {Cell} node : Clicked state.
+ */
 function highlightTransitions(graph, node) {
     let g1 = (graph == graphAnswer) ? graphAnswer : graphQuestion;
     let g2 = (graph == graphAnswer) ? graphQuestion : graphAnswer;
@@ -1451,6 +1470,9 @@ function highlightTransitions(graph, node) {
     }
 }
 
+/**
+ * Updates the position of vertices of self referencing transitions for a given graph.
+ */
 function updateSelfLoops(graph) {
     graph.getLinks().forEach(link => {
         if (link.source().id == link.target().id) {
@@ -1471,6 +1493,9 @@ function updateSelfLoops(graph) {
     });
 }
 
+/**
+ * Adds transitions to the table representation of the answer state machine.
+ */
 function transitionToTable(fromState, symb, toState) {
     let tableId = "answerTransitions";
     let table = document.getElementById(tableId);
@@ -1488,6 +1513,10 @@ function transitionToTable(fromState, symb, toState) {
     sortTable(tableId);
 }
 
+/**
+ * Sorts the table for the answer transitions alphabetically, first by source state,
+ * then by transition symbol, then by target state.
+ */
 function sortTable(id) {
     let tableToSort = document.getElementById(id);
     let rows = tableToSort.rows;
@@ -1501,6 +1530,9 @@ function sortTable(id) {
     }
 }
 
+/**
+ * Helper function to do the actual sorting.
+ */
 function sortTableHelper(rows, i, j, k, min) {
     if (k >= rows.length) {
         return min;
@@ -1514,6 +1546,9 @@ function sortTableHelper(rows, i, j, k, min) {
     }
 }
 
+/**
+ * Highlights selected states both table representations.
+ */
 function highlightTable(fromName, sign = "01") {
     if (fromName[0] == "{") {
         fromName = fromName.substr(1, fromName.length - 2);
@@ -1541,6 +1576,9 @@ function highlightTable(fromName, sign = "01") {
     }
 }
 
+/**
+ * This function lets the helper section appear.
+ */
 function openHelper() {
     document.getElementById("helper").style.display = "block";
     document.getElementById("openHelper").style.display = "none";
@@ -1549,6 +1587,10 @@ function openHelper() {
 
 }
 
+/**
+ * First option for the user. If clicked, provides the corresponding help 
+ * for the given question type.
+ */
 function noIdea() {
     document.getElementById("help1").style.display = "none";
     helpResponse("Okay, hier ein Ansatz für diesen Aufgabentyp:");
@@ -1565,6 +1607,9 @@ function noIdea() {
     }
 }
 
+/**
+ * This function prints its parameter into the help section.
+ */
 function helpResponse(response) {
     let newHelpDiv = document.createElement("div");
     newHelpDiv.id = "helpResponse" + helpCounter++;
@@ -1573,6 +1618,10 @@ function helpResponse(response) {
     newHelpDiv.innerHTML = newHelpText;
 }
 
+/**
+ * First step in help context of minimizing problems.
+ * In this case, the given help is to encapsulate equivalent states in a state set.
+ */
 function minimizeHelp() {
     let newHelpDiv = document.createElement("div");
     newHelpDiv.id = "help" + helpCounter;
@@ -1593,6 +1642,10 @@ function minimizeHelp() {
     newButtonsDiv.appendChild(newButton);
 }
 
+/**
+ * Gives advice for the next step at minimizing a state machine.
+ * In this case, the names of the sets are shown.
+ */
 function minimizeSet() {
     let iteration = iterationSave;
     let sets = setSave;
@@ -1602,6 +1655,7 @@ function minimizeSet() {
         document.getElementById("helpButtonDiv" + helpCounter).style.display = "none";
     }
     helpResponse("Okay, hier gibt es Hilfe für Schritt " + iteration + " bei der Mengenerstellung:");
+    // Is this the first time this is run? In this case refer to start state.
     if (iteration == 0) {
         let newHelpDiv = document.createElement("div");
         newHelpDiv.id = "help" + helpCounter;
@@ -1691,6 +1745,10 @@ function minimizeSet() {
     }
 }
 
+/**
+ * Next step for help with minimization.
+ * Tells the user to check the generated state sets for correctness and how to do it.
+ */
 function minimizeHelpStep() {
     let iteration = iterationSave;
     let ends = endSetSave;
@@ -1771,6 +1829,9 @@ function minimizeHelpStep() {
     }
 }
 
+/**
+ * Computes the new state sets after the current step.
+ */
 function minimizeFurther() {
     let sets = [...setSave];
     let newSets = new Array();
@@ -1815,6 +1876,9 @@ function minimizeFurther() {
     return newSets;
 }
 
+/**
+ * Gets the index of the state set in which the given state lies.
+ */
 function getSetIndex(sets, elem) {
     for (let i = 0; i < sets.length; i++) {
         if (sets[i].includes(elem)) {
@@ -1824,6 +1888,9 @@ function getSetIndex(sets, elem) {
     return null;
 }
 
+/**
+ * Compares two arrays to a depth of 1 for equality.
+ */
 function quickArrayCompare(arr1, arr2) {
     let result = false;
     if (arr1.length != arr2.length) {
@@ -1838,6 +1905,9 @@ function quickArrayCompare(arr1, arr2) {
     return result;
 }
 
+/**
+ * Compares two state sets for equality.
+ */
 function setCompare(set1, set2) {
     let result = false;
     if (set1.length != set2.length) {
@@ -1852,6 +1922,10 @@ function setCompare(set1, set2) {
     return result;
 }
 
+/**
+ * Checks if the next step in the minimization algorithm does not change any state sets.
+ * If this is the case, the algorithm has finished.
+ */
 function checkMinimizeCorrect() {
     let newSet = minimizeFurther(setSave);
 
@@ -1917,6 +1991,9 @@ function checkMinimizeCorrect() {
     }
 }
 
+/**
+ * Helper function to hide help buttons.
+ */
 function hideHelpButtons() {
     if (document.getElementById("helpButton" + helpCounter)) {
         document.getElementById("helpButton" + helpCounter).style.display = "none";
@@ -1925,14 +2002,26 @@ function hideHelpButtons() {
     }
 }
 
+/**
+ * This method iterates through both graphs and colors states corresponding to the
+ * state set of the answerGraph.
+ */
 function highlightSets() {
     //TODO: highlight sets for both graphs in different colors if minimize question
 }
 
+/**
+ * This function redraws all states with a black circle.
+ */
 function unhighlightSets() {
     //TODO: unhighlight different colors for both graphs if minimizequestion
 }
 
+/**
+ * The help for transforming non-deterministic FSMs to deterministic FSMs.
+ * The user is told to start at the start state and check for transitions.
+ * All targets of transitions with the same symbol shall be grouped in a state set.
+ */
 function ndetHelp() {
     let newHelpDiv = document.createElement("div");
     newHelpDiv.id = "help" + helpCounter;
@@ -1953,6 +2042,10 @@ function ndetHelp() {
     newButtonsDiv.appendChild(newButton);
 }
 
+/**
+ * Gives more detailled help about which state is the start state and recommends to
+ * import this state to the answer graph.
+ */
 function ndetStep() {
     hideHelpButtons();
     let newHelpText = "Der Startzustand in der Aufgabe ist " + questionFSM.states[questionFSM.start] +
@@ -1971,6 +2064,10 @@ function ndetStep() {
     newButtonsDiv.appendChild(newButton);
 }
 
+/**
+ * Checks if the start state was copied and gives more detailled information about the 
+ * transition targets for 0 and 1.
+ */
 function ndetNewStates() {
     if (iterationSave == 0) {
         if (!startState) {
@@ -2195,6 +2292,10 @@ function ndetNewStates() {
     }
 }
 
+/**
+ * Checks if the new transitions are correct and tells the user to repeat this process with one of the
+ * newly added states.
+ */
 function ndetNewTransitions() {
     let isCorrect0 = false;
     let isCorrect1 = false;
@@ -2247,7 +2348,10 @@ function ndetNewTransitions() {
     }
 }
 
-
+/**
+ * Checks if the new state sets are added and advises the user to add the corresponding
+ * transition to these new state sets.
+ */
 function ndetNewStates2() {
     let isCorrect = true;
     for (let i = 0; i < targetStatesOld.length; i++) {
@@ -2304,6 +2408,9 @@ function ndetNewStates2() {
     }
 }
 
+/**
+ * The help for constructing an FSM from a language.
+ */
 function languageHelp() {
     let newHelpDiv = document.createElement("div");
     newHelpDiv.id = "help" + helpCounter;
@@ -2323,6 +2430,11 @@ function languageHelp() {
     newButtonsDiv.appendChild(newButton);
 }
 
+/**
+ * First step of generating FSM from language.
+ * The user is told to consider if the empty string is a part of the lanugage and
+ * to reflect this decision in making the start state accepting or not.
+ */
 function languageStep1() {
     hideHelpButtons();
     let newHelpText = "Man beginnt damit, zu überlegen ob das leere Wort zur Sprache gehört. Wenn ja, dann " +
@@ -2350,6 +2462,10 @@ function languageStep1() {
     savedStateSize = 0;
 }
 
+/**
+ * Now the user is told to consider what happens if a 0 is appended 
+ * to a string that led to the current state.
+ */
 function languageStep2() {
 
     let errorMessage = 1;
@@ -2439,7 +2555,10 @@ function languageStep2() {
     }
 }
 
-
+/**
+ * Now the user is told to consider what happens if a 1 is appended 
+ * to a string that led to the current state.
+ */
 function languageStep3() {
     let thisState;
     let errorMessage = 1;
@@ -2526,6 +2645,10 @@ function languageStep3() {
     }
 }
 
+/**
+ * This reveals if a state that can be reached by appending a 0 or 1 to the 
+ * input string has already been created.
+ */
 function languageReveal() {
     hideHelpButtons();
 

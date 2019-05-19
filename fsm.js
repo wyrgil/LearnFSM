@@ -341,7 +341,6 @@ function arrayCompare(arr1, arr2) {
 }
 
 class Transition {
-
     constructor(from, sign, to) {
         this.from = from;
         this.sign = sign;
