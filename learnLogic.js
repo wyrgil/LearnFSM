@@ -530,7 +530,7 @@ function makeStart() {
 /**
  * Removes the currently selected state from the answer graph.
  */
-function deleteState() {
+function deleteStateOrTransition() {
     if (selectedState == null) {
         infoTextColor("Es muss zuerst ein Zustand ausgewählt werden.", "red");
     } else {
@@ -1189,6 +1189,10 @@ function pushStateToSelectedBottomState(cellId) {
             if (states.has(newText)) {
                 states.delete(newText);
             }
+            let isFin = finishStates.has(newText);
+            if(isFin){
+                finishStates.delete(newText);
+            }
 
             newText = pruneString(newText);
             newText += ", " + selectedStateQuestion.id;
@@ -1203,6 +1207,9 @@ function pushStateToSelectedBottomState(cellId) {
             var cellToChange = graphAnswer.getCell(cellId.id);
             cellToChange.attr('text/text', newText);
             states.add(newText);
+            if(isFin){
+                finishStates.add(newText);
+            }
             pushToBottomSetFlag = false;
 
             let table = document.getElementById("answerTransitions");
