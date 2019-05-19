@@ -1,4 +1,6 @@
 /**
+ * This class is a representation of a finite state machine.
+ * 
  * @author Marius Santin <marius.santin@gmail.com>
  */
 
@@ -27,7 +29,8 @@ class FSM {
 
     removeState(state) {
         if (this.states.includes(state)) {
-            this.states.pop(state);
+            let i = this.states.indexOf(state);
+            this.states.splice(i, 1);
         }
     }
 
@@ -37,7 +40,8 @@ class FSM {
 
     removeTransition(transition) {
         if (this.transitions.includes(transition)) {
-            this.transitions.pop(transition);
+            let i = this.transitions.indexOf(transition);
+            this.transitions.splice(i, 1);
         }
     }
 
@@ -47,7 +51,8 @@ class FSM {
 
     removeEnd(end) {
         if (this.ends.includes(end)) {
-            this.ends.pop(end);
+            let i = this.ends.indexOf(end);
+            this.ends.splice(i);
         }
     }
 
@@ -64,32 +69,45 @@ class FSM {
     /**
      * Compares the given FSM to this FSM, but just on acceptance level.
      * 
-     * @param {FSM} fsm : FSM to compare
+     * @param {FSM} fsm : FSM to compare.
      */
     equivalence(fsm) {
+        // Check for correctness.
         let correctness = this.isCorrect();
         if(correctness != 0){
             return "Ungültiger Automat: " + correctness;
         }
 
+        // Starts with a positive result
         let result = 0;
+
+        // This mapper is used to map states from this FSM to states of the given FSM.
         let mapper = new Map();
+        // The start states for both FSMs are mapped.
         mapper.set(this.states[this.start], fsm.states[fsm.start]);
 
+        // New array to store states after a transition as a tuple in form of
+        // [new state for this FSM, new state for given FSM].
         let transitions = new Array();
-
+        // Both start states are pushed to our transitions array as a tuple.
         transitions.push([this.states[this.start], fsm.states[fsm.start]]);
 
         let i = 0;
         do {
             ["0", "1"].forEach(s => {
+                // Target of 0 or 1 transition of this FSMs last added state.
                 let qt = this.getNextState(transitions[i][0], s);
+                // Target of 0 or 1 transition of given FSMs last added state.
                 let qf = fsm.getNextState(transitions[i][1], s);
+                // If both states exist
                 if (qt && qf) {
+                    // If both states are either accepting or not.
                     if (this.ends.includes(this.states.indexOf(qt)) != fsm.ends.includes(fsm.states.indexOf(qf))) {
-                        result = "Es gibt noch falsche Transitionen.";
+                        result = "Es gibt noch falsche akzeptierende Zustände.";
                     }
+                    // Map target of this FSM to target of given FSM.
                     mapper.set(qt, qf);
+                    // If tuple already exisits in transitions[], don't add it, else do.
                     let add = true;
                     transitions.forEach(t => {
                         if (arrayCompare(t, [qt, qf])) {
@@ -103,7 +121,7 @@ class FSM {
                     result = "Es fehlen noch Zustände";
                 }
             });
-
+            // Repeat with next state tuple.
             i++;
         } while (i < mapper.size);
 
@@ -125,6 +143,10 @@ class FSM {
         return result;
     }
 
+    /**
+     * Checks if this FSM has a set start state and for each state at least 
+     * two transitions.
+     */
     isCorrect() {
         let correct = true;
 
@@ -272,6 +294,7 @@ class FSM {
      * @param {Number} count : Number of hints to give.
      */
     __getHintsRecursive(acceptedStrings, visitedStrings, count) {
+        // break recursion if wanted count of accepted strings is reached
         if (acceptedStrings.length >= count || visitedStrings.length >= 1024) {
             return acceptedStrings;
         }
