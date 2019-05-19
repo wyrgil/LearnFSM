@@ -224,6 +224,11 @@ function onLoad() {
 
     start = graphAnswer.getCells()[0];
 
+    /**
+     * TODO:
+     * If database is used, this function needs a parameter with the generated 
+     * id for the question to solve.
+     */
     loadQuestion();
 
     /**
@@ -282,6 +287,7 @@ function onLoad() {
     hintCountTop = null;
     hintCountBottom = null;
 
+    /** Reset helper */
     helpCounter = 1;
 
     setSave = null;
@@ -291,6 +297,21 @@ function onLoad() {
     setsThatRemain = null;
     setsThatRemainIndices0 = null;
     setsThatRemainIndices1 = null;
+
+    targetStates = new Array();
+    targetStatesOld = new Array();
+    statesVisited = new Array();
+    lastState = null;
+    lastTargets = new Array();
+
+    hiddenState = null;
+    hiddenIndex = null;
+    savedStateSize = null;
+    stateMap = new Map();
+    hiddenTarget = null;
+    stepSave = null;
+    currentState = null;
+    statesToVisit = new Array();
 }
 
 /**
@@ -2547,10 +2568,10 @@ function languageStep2() {
         newButton.innerHTML = "Weiter";
         document.getElementById("helper").appendChild(newButtonsDiv);
         newButtonsDiv.appendChild(newButton);
-    } else if(errorMessage == 2){
+    } else if (errorMessage == 2) {
         hideHelpButtons();
         helpResponse("Fertig.");
-    }else{
+    } else {
         alert(errorMessage);
     }
 }

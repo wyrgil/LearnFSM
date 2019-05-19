@@ -320,7 +320,7 @@ class FSM {
 }
 
 /**
- * Compares to arrays if they are equal.
+ * Compares two arrays if they are equal.
  * 
  * @param {Array} arr1
  * @param {Array} arr2
