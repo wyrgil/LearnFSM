@@ -494,8 +494,8 @@ function newState(fromTop) {
                 yPos -= delta;
                 xPos += delta;
             }
-            if(xPos > delta * 4){
-                xPos = delta/2;
+            if (xPos > delta * 4) {
+                xPos = delta / 2;
             }
             infoTextColor("Neuen Zustand " + stateName + " erfolgreich erstellt.", "green");
             states.add(stateName);
@@ -601,6 +601,13 @@ function makeFinish() {
             for (let i = 0; i < table.rows.length; i++) {
                 if (selectedState.attributes.attrs.text.text.replace("\n", "") == table.rows[0].cells[i].innerHTML) {
                     table.rows[0].deleteCell(i);
+                }
+            }
+            table = document.getElementById("answerEndStates");
+            for (let i = 0; i < table.rows[0].cells.length; i++) {
+                if (selectedState.attributes.attrs.text.text.replace("\n", "") == table.rows[0].cells[i].innerHTML) {
+                    table.rows[0].deleteCell(i);
+                    i--;
                 }
             }
         } else {
@@ -1190,7 +1197,7 @@ function pushStateToSelectedBottomState(cellId) {
                 states.delete(newText);
             }
             let isFin = finishStates.has(newText);
-            if(isFin){
+            if (isFin) {
                 finishStates.delete(newText);
             }
 
@@ -1207,7 +1214,7 @@ function pushStateToSelectedBottomState(cellId) {
             var cellToChange = graphAnswer.getCell(cellId.id);
             cellToChange.attr('text/text', newText);
             states.add(newText);
-            if(isFin){
+            if (isFin) {
                 finishStates.add(newText);
             }
             pushToBottomSetFlag = false;
@@ -1841,7 +1848,6 @@ function minimizeHelpStep() {
         }
         newButton.onclick = function () {
             checkMinimizeCorrect();
-            //TODO:
         }
         newButton.innerHTML = "Ich habe den nächsten Schritt gemacht";
         document.getElementById("helper").appendChild(newButtonsDiv);
@@ -2498,91 +2504,97 @@ function languageStep1() {
  * to a string that led to the current state.
  */
 function languageStep2() {
-
-    let errorMessage = 1;
-    if (states.size == savedStateSize + 1) {
-        let s = [...states];
-        for (let [key, value] of stateMap) {
-            if (s.includes(value)) {
-                let i = s.indexOf(value);
-                s.splice(i, 1);
-            }
-        }
-        console.log(s.length);
-        if (s.length == 1) {
-            stateMap.set(hiddenState, s[0]);
-            currentState = s[0];
-        }
-    }
-
-    if (states.size > savedStateSize + 1) {
-        errorMessage = "Es wurden zu viele Zustände hinzugefügt.";
-    } else if (states.size < savedStateSize + 1) {
-        if (answerToFSM.equivalence(solutionFSM) == 0) {
-            errorMessage = 2;
-        } else {
-            errorMessage = "Es wurden keine neuen Zustände hinzugefügt.";
-        }
-    }
-
-    if (errorMessage == 1) {
-
-        savedStateSize++;
+    if (answerToFSM().equivalence(solutionFSM) == 0) {
         hideHelpButtons();
+        helpResponse("Sehr gut.<br>Alle Zustände wurden dem Automaten hinzugefügt und der Automat wurde " +
+            "damit erfolgreich erstellt.");
+    } else {
 
-        let newHelpText = "Jetzt muss man sich fragen, was passiert, wenn man im Zustand " +
-            currentState + " an die Zeichenkette eine 0 anhängt.<br>";
-
-        let nextState = solutionFSM.getNextState(hiddenState, "0");
-
-        if (nextState == hiddenState) {
-            newHelpText += "Hier ändert sich bezüglich der Sprache nichts, wenn eine 0 angehängt wird, " +
-                "man bleibt also im gleichen Zustand. Das heißt, er kann eine 0-Transition auf sich selbst bekommen.";
-            hiddenTarget = false;
-        } else {
-            newHelpText += "Hier ändert sich sich etwas, wenn man eine 0 anhängt. Man benötigt also eine " +
-                "0-Transition in einen anderen Zustand.<br>";
-            hiddenTarget = solutionFSM.getNextState(hiddenState);
-
-            let mapContains = stateMap.has(hiddenTarget);
-            if (mapContains) {
-                newHelpText += "Dieser Zustand ist aber bereits erstellt. Welcher könnte es sein?";
-            } else {
-                newHelpText += "Diesen Zustand gibt es aber noch nicht. Da muss ein neuer angelegt werden.";
-                if (!statesToVisit.includes(hiddenTarget)) {
-                    statesToVisit.push(hiddenTarget);
+        let errorMessage = 1;
+        if (states.size == savedStateSize + 1) {
+            let s = [...states];
+            for (let [key, value] of stateMap) {
+                if (s.includes(value)) {
+                    let i = s.indexOf(value);
+                    s.splice(i, 1);
                 }
             }
-        }
-        helpResponse(newHelpText);
-        let newButtonsDiv = document.createElement("div");
-        newButtonsDiv.id = "helpButton" + helpCounter;
-
-        if (nextState != hiddenState && hiddenTarget) {
-            let revealButton = document.createElement("button");
-            revealButton.onclick = function () {
-                languageReveal();
+            console.log(s.length);
+            if (s.length == 1) {
+                stateMap.set(hiddenState, s[0]);
+                currentState = s[0];
             }
-            stepSave = 3;
-            revealButton.innerHTML = "Zeigen";
-            revealButton.id = "revealbtn" + helpCounter;
-
-            newButtonsDiv.appendChild(revealButton);
-
         }
-        document.getElementById("helper").appendChild(newButtonsDiv);
-        let newButton = document.createElement("button");
-        newButton.onclick = function () {
-            languageStep3();
+
+        if (states.size > savedStateSize + 1) {
+            errorMessage = "Es wurden zu viele Zustände hinzugefügt.";
+        } else if (states.size < savedStateSize + 1) {
+            if (answerToFSM.equivalence(solutionFSM) == 0) {
+                errorMessage = 2;
+            } else {
+                errorMessage = "Es wurden keine neuen Zustände hinzugefügt.";
+            }
         }
-        newButton.innerHTML = "Weiter";
-        document.getElementById("helper").appendChild(newButtonsDiv);
-        newButtonsDiv.appendChild(newButton);
-    } else if (errorMessage == 2) {
-        hideHelpButtons();
-        helpResponse("Fertig.");
-    } else {
-        alert(errorMessage);
+
+        if (errorMessage == 1) {
+
+            savedStateSize++;
+            hideHelpButtons();
+
+            let newHelpText = "Jetzt muss man sich fragen, was passiert, wenn man im Zustand " +
+                currentState + " an die Zeichenkette eine 0 anhängt.<br>";
+
+            let nextState = solutionFSM.getNextState(hiddenState, "0");
+
+            if (nextState == hiddenState) {
+                newHelpText += "Hier ändert sich bezüglich der Sprache nichts, wenn eine 0 angehängt wird, " +
+                    "man bleibt also im gleichen Zustand. Das heißt, er kann eine 0-Transition auf sich selbst bekommen.";
+                hiddenTarget = false;
+            } else {
+                newHelpText += "Hier ändert sich sich etwas, wenn man eine 0 anhängt. Man benötigt also eine " +
+                    "0-Transition in einen anderen Zustand.<br>";
+                hiddenTarget = solutionFSM.getNextState(hiddenState);
+
+                let mapContains = stateMap.has(hiddenTarget);
+                if (mapContains) {
+                    newHelpText += "Dieser Zustand ist aber bereits erstellt. Welcher könnte es sein?";
+                } else {
+                    newHelpText += "Diesen Zustand gibt es aber noch nicht. Da muss ein neuer angelegt werden.";
+                    if (!statesToVisit.includes(hiddenTarget)) {
+                        statesToVisit.push(hiddenTarget);
+                    }
+                }
+            }
+            helpResponse(newHelpText);
+            let newButtonsDiv = document.createElement("div");
+            newButtonsDiv.id = "helpButton" + helpCounter;
+
+            if (nextState != hiddenState && hiddenTarget) {
+                let revealButton = document.createElement("button");
+                revealButton.onclick = function () {
+                    languageReveal();
+                }
+                stepSave = 3;
+                revealButton.innerHTML = "Zeigen";
+                revealButton.id = "revealbtn" + helpCounter;
+
+                newButtonsDiv.appendChild(revealButton);
+
+            }
+            document.getElementById("helper").appendChild(newButtonsDiv);
+            let newButton = document.createElement("button");
+            newButton.onclick = function () {
+                languageStep3();
+            }
+            newButton.innerHTML = "Weiter";
+            document.getElementById("helper").appendChild(newButtonsDiv);
+            newButtonsDiv.appendChild(newButton);
+        } else if (errorMessage == 2) {
+            hideHelpButtons();
+            helpResponse("Fertig.");
+        } else {
+            alert(errorMessage);
+        }
     }
 }
 
@@ -2591,88 +2603,92 @@ function languageStep2() {
  * to a string that led to the current state.
  */
 function languageStep3() {
-    let thisState;
-    let errorMessage = 1;
-    let thisTarget = hiddenTarget;
-
-    let hiddenAdd = 0;
-    if (hiddenTarget && !stateMap.has(hiddenTarget)) {
-        hiddenAdd = 1;
-    }
-    if (states.size == savedStateSize + hiddenAdd) {
-        let s = [...states];
-        for (let [key, value] of stateMap) {
-            if (s.includes(value)) {
-                let i = s.indexOf(value);
-                s.splice(i, 1);
-            }
-        }
-        console.log(s.length);
-        if (s.length == 1 && hiddenTarget) {
-            stateMap.set(hiddenTarget, s[0]);
-        }
-    }
-    if (states.size > savedStateSize + hiddenAdd) {
-        errorMessage = "Es wurden zu viele Zustände hinzugefügt.";
-    } else if (states.size < savedStateSize + hiddenAdd) {
-        errorMessage = "Es wurden keine neuen Zustände hinzugefügt.";
-    }
-
-    if (errorMessage == 1) {
+    if (answerToFSM().equivalence(solutionFSM) == 0) {
         hideHelpButtons();
+        helpResponse("Sehr gut.<br>Alle Zustände wurden dem Automaten hinzugefügt und der Automat wurde " +
+            "damit erfolgreich erstellt.");
+    } else {
+        let errorMessage = 1;
 
-        let newHelpText = "Jetzt muss man sich fragen, was passiert, wenn man im Zustand " +
-            currentState + " an die Zeichenkette eine 1 anhängt.<br>";
-
-        let nextState = solutionFSM.getNextState(hiddenState, "1");
-
-        if (nextState == hiddenState) {
-            newHelpText += "Hier ändert sich bezüglich der Sprache nichts, wenn eine 1 angehängt wird, " +
-                "man bleibt also im gleichen Zustand. Das heißt, er kann eine 1-Transition auf sich selbst bekommen.";
-            hiddenTarget = false;
-        } else {
-            newHelpText += "Hier ändert sich sich etwas, wenn man eine 1 anhängt. Man benötigt also eine " +
-                "1-Transition in einen anderen Zustand.<br>";
-            hiddenTarget = solutionFSM.getNextState(hiddenState, "1");
-            let mapContains = stateMap.has(hiddenTarget);
-            if (mapContains) {
-                newHelpText += "Dieser Zustand ist aber bereits erstellt. Welcher könnte es sein?";
-            } else {
-                newHelpText += "Diesen Zustand gibt es aber noch nicht. Da muss ein neuer angelegt werden.";
-                if (!statesToVisit.includes(hiddenTarget)) {
-                    statesToVisit.push(hiddenTarget);
+        let hiddenAdd = 0;
+        if (hiddenTarget && !stateMap.has(hiddenTarget)) {
+            hiddenAdd = 1;
+        }
+        if (states.size == savedStateSize + hiddenAdd) {
+            let s = [...states];
+            for (let [key, value] of stateMap) {
+                if (s.includes(value)) {
+                    let i = s.indexOf(value);
+                    s.splice(i, 1);
                 }
             }
-        }
-        helpResponse(newHelpText);
-        let newButtonsDiv = document.createElement("div");
-        newButtonsDiv.id = "helpButton" + helpCounter;
-
-        if (stateMap.has(hiddenTarget)) {
-            let revealButton = document.createElement("button");
-            revealButton.onclick = function () {
-                languageReveal();
+            console.log(s.length);
+            if (s.length == 1 && hiddenTarget) {
+                stateMap.set(hiddenTarget, s[0]);
             }
-            stepSave = 2;
-            revealButton.innerHTML = "Zeigen";
-            revealButton.id = "revealbtn" + helpCounter;
-
-            newButtonsDiv.appendChild(revealButton);
-
         }
-        document.getElementById("helper").appendChild(newButtonsDiv);
-        let newButton = document.createElement("button");
-        newButton.onclick = function () {
-            languageStep2();
+        if (states.size > savedStateSize + hiddenAdd) {
+            errorMessage = "Es wurden zu viele Zustände hinzugefügt.";
+        } else if (states.size < savedStateSize + hiddenAdd) {
+            errorMessage = "Es wurden keine neuen Zustände hinzugefügt.";
         }
-        newButton.innerHTML = "Weiter";
-        document.getElementById("helper").appendChild(newButtonsDiv);
-        newButtonsDiv.appendChild(newButton);
 
-        statesVisited.push(hiddenState);
-        hiddenState = hiddenTarget ? hiddenTarget : null;
-    } else {
-        alert(errorMessage);
+        if (errorMessage == 1) {
+            hideHelpButtons();
+
+            let newHelpText = "Jetzt muss man sich fragen, was passiert, wenn man im Zustand " +
+                currentState + " an die Zeichenkette eine 1 anhängt.<br>";
+
+            let nextState = solutionFSM.getNextState(hiddenState, "1");
+
+            if (nextState == hiddenState) {
+                newHelpText += "Hier ändert sich bezüglich der Sprache nichts, wenn eine 1 angehängt wird, " +
+                    "man bleibt also im gleichen Zustand. Das heißt, er kann eine 1-Transition auf sich selbst bekommen.";
+                hiddenTarget = false;
+            } else {
+                newHelpText += "Hier ändert sich sich etwas, wenn man eine 1 anhängt. Man benötigt also eine " +
+                    "1-Transition in einen anderen Zustand.<br>";
+                hiddenTarget = solutionFSM.getNextState(hiddenState, "1");
+                let mapContains = stateMap.has(hiddenTarget);
+                if (mapContains) {
+                    newHelpText += "Dieser Zustand ist aber bereits erstellt. Welcher könnte es sein?";
+                } else {
+                    newHelpText += "Diesen Zustand gibt es aber noch nicht. Da muss ein neuer angelegt werden.";
+                    if (!statesToVisit.includes(hiddenTarget)) {
+                        statesToVisit.push(hiddenTarget);
+                    }
+                }
+            }
+            helpResponse(newHelpText);
+            let newButtonsDiv = document.createElement("div");
+            newButtonsDiv.id = "helpButton" + helpCounter;
+
+            if (stateMap.has(hiddenTarget)) {
+                let revealButton = document.createElement("button");
+                revealButton.onclick = function () {
+                    languageReveal();
+                }
+                stepSave = 2;
+                revealButton.innerHTML = "Zeigen";
+                revealButton.id = "revealbtn" + helpCounter;
+
+                newButtonsDiv.appendChild(revealButton);
+
+            }
+            document.getElementById("helper").appendChild(newButtonsDiv);
+            let newButton = document.createElement("button");
+            newButton.onclick = function () {
+                languageStep2();
+            }
+            newButton.innerHTML = "Weiter";
+            document.getElementById("helper").appendChild(newButtonsDiv);
+            newButtonsDiv.appendChild(newButton);
+
+            statesVisited.push(hiddenState);
+            hiddenState = hiddenTarget ? hiddenTarget : null;
+        } else {
+            alert(errorMessage);
+        }
     }
 }
 
